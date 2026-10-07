@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { setInsertStyle } from "@/library/builder";
 import { getEditorApi } from "@/engine/apiRef";
 import { getSetting, setSetting } from "@/persistence/repo";
 import {
@@ -52,6 +53,13 @@ async function applyToScene(p: StylePreset, scope: "selection" | "all") {
     },
     captureUpdate: CaptureUpdateAction.IMMEDIATELY,
   });
+  // New library items, kits, smart components and DSL diagrams now draw in this look too.
+  const look = setInsertStyle({
+    roughness: p.roughness,
+    stroke: p.strokeColor,
+    fontFamily: p.fontFamily,
+  });
+  void setSetting("insertStyle", { ...look });
   useToasts.getState().push({ message: `Applied “${p.name}”. Undo with Ctrl/Cmd+Z.` });
 }
 
@@ -167,6 +175,21 @@ function Body() {
           Everything
         </label>
       </fieldset>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-muted text-xs">
+          Applying a preset also sets the look of newly inserted components, kits and diagrams.
+        </p>
+        <button
+          className={btn}
+          onClick={() => {
+            setInsertStyle(null);
+            void setSetting("insertStyle", null);
+            useToasts.getState().push({ message: "New components use the standard look again." });
+          }}
+        >
+          Reset new-shape look
+        </button>
+      </div>
       <ul data-testid="preset-list" className="flex flex-col gap-2">
         {[...BUILTIN_PRESETS, ...saved].map((p) => (
           <Card key={p.id} p={p} />

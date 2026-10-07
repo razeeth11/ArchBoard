@@ -16,6 +16,8 @@ export interface PdfOptions {
   customHeightMm: number;
   /** One PDF page per frame (frames act as slides) instead of a single page. */
   framesAsPages: boolean;
+  /** Export every page of the scene (one or more PDF pages each), not only the open one. */
+  allPages: boolean;
 }
 
 export interface ExportOptions {
@@ -53,6 +55,7 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
     customWidthMm: 210,
     customHeightMm: 297,
     framesAsPages: false,
+    allPages: false,
   },
   title: "",
   description: "",
@@ -99,6 +102,7 @@ export function sanitizeOptions(raw: unknown): ExportOptions {
       customWidthMm: clamp(p.customWidthMm, 20, 5000, d.pdf.customWidthMm),
       customHeightMm: clamp(p.customHeightMm, 20, 5000, d.pdf.customHeightMm),
       framesAsPages: p.framesAsPages === true,
+      allPages: p.allPages === true,
     },
     title: typeof r.title === "string" ? r.title.slice(0, 200) : "",
     description: typeof r.description === "string" ? r.description.slice(0, 2000) : "",

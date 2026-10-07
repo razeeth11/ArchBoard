@@ -19,6 +19,8 @@ export interface SceneSnapshot {
   appState: Pick<AppState, "selectedElementIds" | "viewBackgroundColor">;
   files: BinaryFiles;
   sceneTitle: string;
+  /** Every page of the scene in order (the open page carries its live content). PDF "all pages" only. */
+  pages?: { title: string; elements: readonly ExcalidrawElement[]; files: BinaryFiles }[];
 }
 
 export interface RenderResult {
@@ -159,16 +161,29 @@ async function renderSvg(scene: SceneSnapshot, o: ExportOptions, h: Hooks): Prom
 }
 
 async function renderPdf(scene: SceneSnapshot, o: ExportOptions, h: Hooks): Promise<RenderResult> {
-  const sheetsSpec: { elements: ExcalidrawElement[]; frame: ExcalidrawFrameLikeElement | null }[] =
-    [];
-  const frames = listFrames(scene.elements);
-  if (o.pdf.framesAsPages && o.scope === "scene" && frames.length > 0) {
-    for (const f of frames) {
-      sheetsSpec.push(pickFrame(scene, f));
+  type Sheet = {
+    scene: SceneSnapshot;
+    elements: ExcalidrawElement[];
+    frame: ExcalidrawFrameLikeElement | null;
+  };
+  const sheetsSpec: Sheet[] = [];
+  const sourceScenes: SceneSnapshot[] =
+    o.pdf.allPages && scene.pages?.length
+      ? scene.pages.map((p) => ({ ...scene, elements: p.elements, files: p.files }))
+      : [scene];
+  for (const src of sourceScenes) {
+    const frames = listFrames(src.elements);
+    if (o.pdf.framesAsPages && o.scope === "scene" && frames.length > 0) {
+      for (const f of frames) sheetsSpec.push({ scene: src, ...pickFrame(src, f) });
+    } else if (sourceScenes.length > 1) {
+      // Multi-page scenes: an empty page is skipped rather than failing the whole export.
+      const elements = src.elements.filter((e) => !e.isDeleted);
+      if (elements.length) sheetsSpec.push({ scene: src, elements, frame: null });
+    } else {
+      sheetsSpec.push({ scene: src, ...pick(src, o) });
     }
-  } else {
-    sheetsSpec.push(pick(scene, o));
   }
+  if (!sheetsSpec.length) throw new ExportError("Every page is empty: draw something first.");
   const sheets = [];
   for (const [i, s] of sheetsSpec.entries()) {
     await step(
@@ -176,7 +191,7 @@ async function renderPdf(scene: SceneSnapshot, o: ExportOptions, h: Hooks): Prom
       `Preparing page ${i + 1} of ${sheetsSpec.length}`,
       0.05 + (0.1 * i) / sheetsSpec.length,
     );
-    sheets.push({ svg: await renderSvgElement(scene, o, s.elements, s.frame) });
+    sheets.push({ svg: await renderSvgElement(s.scene, o, s.elements, s.frame) });
   }
   const { buildPdf } = await import("./pdf");
   const blob = await buildPdf(

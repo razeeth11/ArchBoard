@@ -5,6 +5,7 @@ import {
   SCHEMA_VERSION,
   type BlobRecord,
   type FileRef,
+  type Comment,
   type Folder,
   type Page,
   type Scene,
@@ -21,18 +22,21 @@ interface BackupFile {
   scenes: { scene: Scene; pages: Page[] }[];
   folders: Folder[];
   library: unknown[];
+  /** Optional (added after v1 files existed); older backups simply have none. */
+  comments?: Comment[];
   blobs: Record<string, { mime: string; base64: string }>;
 }
 
 /** Full backup of every local scene (including trash) as one JSON document. Images are embedded once, by hash. */
 export async function buildBackup(): Promise<string> {
   const db = getDb();
-  const [scenes, pages, folders, lib, blobs] = await Promise.all([
+  const [scenes, pages, folders, lib, blobs, comments] = await Promise.all([
     db.scenes.toArray(),
     db.pages.toArray(),
     db.folders.toArray(),
     db.libraries.get("default"),
     db.blobs.toArray(),
+    db.comments.toArray(),
   ]);
   const pagesByScene = Map.groupBy(pages, (p) => p.sceneId);
   const used = new Set<string>();
@@ -48,10 +52,45 @@ export async function buildBackup(): Promise<string> {
     scenes: scenes.map((scene) => ({ scene, pages: pagesByScene.get(scene.id) ?? [] })),
     folders,
     library: lib?.items ?? [],
+    comments,
     blobs: blobMap,
   };
   await setSetting("lastBackupAt", Date.now());
   return JSON.stringify(file);
+}
+
+/** Comments from a file are untrusted: keep only well-formed ones whose scene and page were imported. */
+function importedComments(
+  raw: unknown,
+  sceneMap: Map<string, string>,
+  pageMap: Map<string, string>,
+): Comment[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Comment[] = [];
+  for (const c of raw.slice(0, 5000)) {
+    if (!isRec(c) || typeof c.text !== "string" || !c.text.trim()) continue;
+    const sceneId = sceneMap.get(String(c.sceneId));
+    const pageId = pageMap.get(String(c.pageId));
+    if (!sceneId || !pageId) continue;
+    const a = c.anchor;
+    const anchor =
+      isRec(a) && typeof a.elementId === "string"
+        ? { elementId: a.elementId.slice(0, 100) }
+        : isRec(a) && Number.isFinite(a.x) && Number.isFinite(a.y)
+          ? { x: Number(a.x), y: Number(a.y) }
+          : null;
+    if (!anchor) continue;
+    out.push({
+      id: newId(),
+      sceneId,
+      pageId,
+      text: c.text.slice(0, 2000),
+      resolved: c.resolved === true,
+      createdAt: Number.isFinite(c.createdAt) ? Number(c.createdAt) : Date.now(),
+      anchor,
+    });
+  }
+  return out;
 }
 
 export interface ImportResult {
@@ -99,11 +138,14 @@ export async function importBackup(text: string): Promise<ImportResult> {
 
   const scenes: Scene[] = [];
   const pages: Page[] = [];
+  const sceneMap = new Map<string, string>();
+  const pageMapAll = new Map<string, string>();
   const extraBlobs: BlobRecord[] = [];
   for (const entry of data.scenes) {
     if (!isRec(entry) || !isRec(entry.scene)) continue;
     const src = entry.scene as unknown as Scene;
     const sceneId = newId();
+    if (typeof src.id === "string") sceneMap.set(src.id, sceneId);
     const pageIdMap = new Map<string, string>();
     const srcPages = Array.isArray(entry.pages) ? entry.pages : [];
     for (const rawPage of srcPages) {
@@ -111,6 +153,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
       extraBlobs.push(...blobs);
       const id = newId();
       pageIdMap.set(page.id, id);
+      pageMapAll.set(page.id, id);
       pages.push({ ...page, id, sceneId, rev: 1 });
     }
     scenes.push({
@@ -123,14 +166,17 @@ export async function importBackup(text: string): Promise<ImportResult> {
     });
   }
 
+  const comments = importedComments(data.comments, sceneMap, pageMapAll);
+
   await db.transaction(
     "rw",
-    [db.scenes, db.pages, db.folders, db.blobs, db.libraries],
+    [db.scenes, db.pages, db.folders, db.blobs, db.libraries, db.comments],
     async () => {
       await db.blobs.bulkPut([...blobRecords, ...extraBlobs]);
       await db.folders.bulkAdd(folders);
       await db.scenes.bulkAdd(scenes);
       await db.pages.bulkAdd(pages);
+      await db.comments.bulkAdd(comments);
       if (Array.isArray(data.library) && data.library.length) {
         const cur = await db.libraries.get("default");
         await db.libraries.put({

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getSetting, setSetting } from "@/persistence/repo";
+import { setInsertStyle } from "@/library/builder";
 import type { SvgMode } from "@/library/svgImport";
 
 interface UiState {
@@ -11,7 +12,7 @@ interface UiState {
   iconifyOnline: boolean;
   setIconifyOnline: (v: boolean) => void;
   /** Phase 6 dialogs (one at a time). */
-  dialog: null | "history" | "slides" | "mermaid" | "dsl" | "share" | "styles";
+  dialog: null | "history" | "slides" | "mermaid" | "dsl" | "share" | "styles" | "ai";
   setDialog: (d: UiState["dialog"]) => void;
   paletteOpen: boolean;
   setPaletteOpen: (v: boolean) => void;
@@ -52,11 +53,13 @@ export const useUi = create<UiState>((set) => ({
     void setSetting("svgMode", svgMode);
   },
   hydrate: async () => {
-    const [componentsOpen, iconifyOnline, svgMode] = await Promise.all([
+    const [componentsOpen, iconifyOnline, svgMode, insertStyle] = await Promise.all([
       getSetting("componentsOpen", false),
       getSetting("iconifyOnline", false),
       getSetting<SvgMode>("svgMode", "image"),
+      getSetting<unknown>("insertStyle", null),
     ]);
+    if (insertStyle && typeof insertStyle === "object") setInsertStyle(insertStyle as never);
     set({
       componentsOpen: componentsOpen === true,
       iconifyOnline: iconifyOnline === true,

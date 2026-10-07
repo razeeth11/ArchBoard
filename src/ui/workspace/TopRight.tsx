@@ -132,6 +132,9 @@ function ToolsMenu() {
           <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("dsl")}>
             Diagram from text (DSL)
           </DropdownMenu.Item>
+          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("ai")}>
+            Draw with AI (your key)
+          </DropdownMenu.Item>
           <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("mermaid")}>
             Mermaid import / export
           </DropdownMenu.Item>

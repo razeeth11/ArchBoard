@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { frame, rect } from "../fixtures/diagrams";
 import { apiReady, elementCount, openEditor, waitSaved } from "./helpers";
+import { inspectPdf } from "./pdf-helpers";
 
 const tools = async (page: Page, item: string | RegExp) => {
   await page.getByRole("button", { name: "Tools", exact: true }).click();
@@ -300,6 +301,19 @@ test.describe("style presets", () => {
       .getByRole("button", { name: "Apply" })
       .click();
     await expect.poll(async () => (await live(page))[0]!.stroke).toBe("#e7f0ff");
+    // New content picks up the preset's look too.
+    await page.keyboard.press("Escape");
+    await insertDsl(page, 'service api "API" -> db postgres "DB"\n');
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          window
+            .__archboard!.api.getSceneElements()
+            .filter((e) => e.type === "rectangle" && e.id !== "a")
+            .map((e) => e.roughness),
+        ),
+      )
+      .toEqual(expect.arrayContaining([0]));
   });
 });
 
@@ -340,5 +354,86 @@ test.describe("flowchart quick-create", () => {
     const els = await live(page);
     expect(els.filter((e) => e.type === "arrow")).toHaveLength(1);
     expect(els.find((e) => e.type === "arrow")).toMatchObject({ sb: 1, eb: 1 });
+  });
+});
+
+test.describe("bring-your-own-key AI", () => {
+  // The rejected-key test provokes a real 401, which the browser logs as a console error.
+  test.use({ allowedConsoleErrors: [/status of 401/] });
+
+  test("nothing is sent until asked; the result opens in the DSL editor for review", async ({
+    page,
+  }) => {
+    const calls: { key: string | undefined; body: string }[] = [];
+    await page.route("https://api.anthropic.com/**", async (route) => {
+      const r = route.request();
+      calls.push({ key: r.headers()["x-api-key"], body: r.postData() ?? "" });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "access-control-allow-origin": "*" },
+        body: JSON.stringify({
+          content: [
+            { type: "text", text: '```\nservice api "Photo API" -> db postgres "Photo DB"\n```' },
+          ],
+        }),
+      });
+    });
+    await openEditor(page);
+    await tools(page, /Draw with AI/);
+    await expect(page.getByTestId("ai-notice")).toContainText("directly from your browser");
+    expect(calls).toHaveLength(0);
+    await expect(page.getByRole("button", { name: "Generate diagram text" })).toBeDisabled();
+    await page.getByTestId("ai-prompt").fill("a photo app with an API and a database");
+    await page.getByTestId("ai-key").fill("sk-ant-test");
+    await page.getByRole("button", { name: "Generate diagram text" }).click();
+    await expect(page.getByTestId("dsl-source")).toHaveValue(/Photo API/);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.key).toBe("sk-ant-test");
+    await expect(page.getByTestId("dsl-preview")).toBeVisible();
+    await page.getByRole("button", { name: "Insert diagram" }).click();
+    await expect.poll(() => elementCount(page)).toBeGreaterThan(3);
+  });
+
+  test("a rejected key shows an error and can be forgotten", async ({ page }) => {
+    await page.route("https://api.anthropic.com/**", (route) =>
+      route.fulfill({ status: 401, headers: { "access-control-allow-origin": "*" }, body: "{}" }),
+    );
+    await openEditor(page);
+    await tools(page, /Draw with AI/);
+    await page.getByTestId("ai-prompt").fill("anything");
+    await page.getByTestId("ai-key").fill("bad");
+    await page.getByRole("button", { name: "Generate diagram text" }).click();
+    await expect(page.getByTestId("ai-error")).toContainText("rejected");
+    await page.getByRole("button", { name: "Forget key" }).click();
+    await expect(page.getByTestId("ai-key")).toHaveValue("");
+  });
+});
+
+test.describe("multi-page PDF", () => {
+  test("includes every page of the scene", async ({ page }) => {
+    await openEditor(page);
+    await apiReady(page);
+    await setElements(page, [rect({ id: "a", x: 100, y: 100, width: 100, height: 60 })]);
+    await waitSaved(page);
+    await page.getByRole("button", { name: "Add page" }).click();
+    await expect(page.getByTestId("page-tab")).toHaveCount(2);
+    // The engine remounts for the new page; wait for the fresh, empty canvas before drawing on it.
+    await expect.poll(() => elementCount(page)).toBe(0);
+    await setElements(page, [rect({ id: "b", x: 50, y: 50, width: 200, height: 100 })]);
+    await waitSaved(page);
+    await page.getByRole("button", { name: "Export", exact: true }).click();
+    await page
+      .getByRole("radiogroup", { name: "Format" })
+      .getByText("PDF", { exact: true })
+      .click();
+    await page.getByLabel(/Include every page of this scene/).check();
+    const [dl] = await Promise.all([
+      page.waitForEvent("download", { timeout: 60_000 }),
+      page.getByRole("button", { name: "Download PDF" }).click(),
+    ]);
+    const { readFile } = await import("node:fs/promises");
+    const pdf = await inspectPdf(await readFile((await dl.path())!));
+    expect(pdf.pages).toHaveLength(2);
   });
 });

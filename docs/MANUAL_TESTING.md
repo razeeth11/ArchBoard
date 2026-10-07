@@ -98,3 +98,10 @@ See `docs/KNOWN_GAPS.md` in the repo for the honest list of what is not built ye
 3. In DevTools, Application, Service Workers: one worker for `/`; Cache Storage has `archboard-precache-…`.
 4. Network tab while exporting PNG, SVG, PDF and using the DSL: only requests to your own origin.
 5. `out/csp.txt` is the page policy; confirm the console stays free of CSP errors (apart from blocked `esm.sh` font fallbacks, a known gap).
+
+## 9. Last additions
+
+1. **All pages PDF:** add a second page with different content, Export, PDF, tick "Include every page of this scene", download: one PDF page per scene page.
+2. **Comments in backups:** add a comment, download a backup from the scenes panel, import it: the copy has the comment pinned.
+3. **Draw with AI (needs your own key):** Tools, Draw with AI, paste an Anthropic key, describe a system: the generated text opens in the DSL editor. Nothing is sent before you press Generate; "Forget key" removes it.
+4. **Presets set new-shape look:** apply Blueprint, then insert a kit or a DSL diagram: it is drawn clean (no sketch roughness). "Reset new-shape look" restores the default.

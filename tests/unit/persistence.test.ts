@@ -256,6 +256,31 @@ describe("backup and import", () => {
     expect(await getDb().blobs.count()).toBe(1);
   });
 
+  it("round-trips comments, remapping scene and page ids and dropping malformed ones", async () => {
+    const { addComment, listComments } = await import("@/persistence/comments");
+    const s = await repo.createScene({ title: "Commented", elements: [rect("a")] });
+    const pageId = s.pageIds[0]!;
+    await addComment(s.id, pageId, "Why a queue?", { elementId: "a" });
+    await addComment(s.id, pageId, "Look here", { x: 5, y: 9 });
+    const parsed = JSON.parse(await buildBackup());
+    expect(parsed.comments).toHaveLength(2);
+    parsed.comments.push(
+      { id: "bad1", sceneId: s.id, pageId, text: "  ", anchor: { x: 1, y: 1 } },
+      { id: "bad2", sceneId: "nope", pageId, text: "orphan", anchor: { x: 1, y: 1 } },
+      { id: "bad3", sceneId: s.id, pageId, text: "no anchor", anchor: "x" },
+    );
+    await importBackup(JSON.stringify(parsed));
+    const copy = (await repo.listScenes()).find((x) => x.id !== s.id)!;
+    const imported = await listComments(copy.id, copy.pageIds[0]!);
+    expect(imported.map((c) => c.text).sort()).toEqual(["Look here", "Why a queue?"]);
+    expect(imported.every((c) => c.sceneId === copy.id && c.id !== parsed.comments[0].id)).toBe(
+      true,
+    );
+    // Old backups without a comments field still import.
+    delete parsed.comments;
+    await expect(importBackup(JSON.stringify(parsed))).resolves.toBeDefined();
+  });
+
   it("rejects non-backup JSON", async () => {
     await expect(importBackup('{"type":"nope"}')).rejects.toThrow();
   });

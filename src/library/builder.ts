@@ -10,7 +10,31 @@ export interface StyleCtx {
   fontFamily: number;
 }
 
-export const DEFAULT_STYLE: StyleCtx = { roughness: 1, stroke: "#1e1e1e", fontFamily: 5 };
+const FACTORY_STYLE: StyleCtx = { roughness: 1, stroke: "#1e1e1e", fontFamily: 5 };
+
+/**
+ * Look used by everything we generate (library, kits, smart components, DSL, templates). It is a
+ * shared mutable object because it is the default argument everywhere; change it only through
+ * `setInsertStyle` so the rest of the app sees one consistent value.
+ */
+export const DEFAULT_STYLE: StyleCtx = { ...FACTORY_STYLE };
+
+/** Validated update of the look used for newly inserted content; `null` restores the factory look. */
+export function setInsertStyle(next: Partial<StyleCtx> | null): StyleCtx {
+  const n = next ?? FACTORY_STYLE;
+  if (n.roughness === 0 || n.roughness === 1 || n.roughness === 2)
+    DEFAULT_STYLE.roughness = n.roughness;
+  if (typeof n.stroke === "string" && /^#[0-9a-f]{6}$/i.test(n.stroke))
+    DEFAULT_STYLE.stroke = n.stroke;
+  if (
+    typeof n.fontFamily === "number" &&
+    Number.isInteger(n.fontFamily) &&
+    n.fontFamily > 0 &&
+    n.fontFamily < 20
+  )
+    DEFAULT_STYLE.fontFamily = n.fontFamily;
+  return DEFAULT_STYLE;
+}
 
 export interface BuiltFile {
   id: string;

@@ -108,6 +108,7 @@ test.describe("content security policy", () => {
     expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(csp).toMatch(/script-src[^;]*'sha256-/);
     expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("https://api.anthropic.com");
     expect(csp).toContain("frame-ancestors 'none'");
   });
 

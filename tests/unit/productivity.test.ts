@@ -93,3 +93,15 @@ describe("comments repo", () => {
     expect(comments.anchorPoint({ x: 3, y: 4 }, els)).toEqual({ x: 3, y: 4 });
   });
 });
+
+describe("insert style", () => {
+  it("validates what it accepts and can be reset", async () => {
+    const { DEFAULT_STYLE, setInsertStyle } = await import("@/library/builder");
+    setInsertStyle({ roughness: 0, stroke: "#112233", fontFamily: 8 });
+    expect(DEFAULT_STYLE).toEqual({ roughness: 0, stroke: "#112233", fontFamily: 8 });
+    setInsertStyle({ roughness: 7 as never, stroke: "red", fontFamily: -3 });
+    expect(DEFAULT_STYLE).toEqual({ roughness: 0, stroke: "#112233", fontFamily: 8 });
+    setInsertStyle(null);
+    expect(DEFAULT_STYLE).toEqual({ roughness: 1, stroke: "#1e1e1e", fontFamily: 5 });
+  });
+});

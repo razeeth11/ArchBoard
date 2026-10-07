@@ -47,8 +47,9 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  // api.iconify.design is only contacted after the user turns on online icon search.
-  "connect-src 'self' https://api.iconify.design",
+  // Both hosts are contacted only after an explicit opt-in: online icon search (iconify) and the
+  // bring-your-own-key AI dialog (anthropic).
+  "connect-src 'self' https://api.iconify.design https://api.anthropic.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "frame-src 'none'",

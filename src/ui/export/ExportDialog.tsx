@@ -20,6 +20,25 @@ import { useWorkspace } from "@/store/workspace";
 
 const SETTING_KEY = "exportOptions";
 
+/** All pages of the open scene in order; the open page uses its live content, others come from storage. */
+async function scenePages(live: SceneSnapshot): Promise<NonNullable<SceneSnapshot["pages"]>> {
+  const a = useWorkspace.getState().active;
+  if (!a || a.pages.length < 2) return [];
+  await useWorkspace.getState().flushSaves();
+  const repo = await import("@/persistence/repo");
+  const out: NonNullable<SceneSnapshot["pages"]> = [];
+  for (const p of a.pages) {
+    if (p.id === a.page.id) {
+      out.push({ title: p.title, elements: live.elements, files: live.files });
+      continue;
+    }
+    const page = await repo.loadPage(a.scene.id, p.id);
+    const files = Object.fromEntries((await repo.loadFiles(page.fileRefs)).map((f) => [f.id, f]));
+    out.push({ title: p.title, elements: page.elements, files: files as never });
+  }
+  return out;
+}
+
 function snapshot(title: string): SceneSnapshot | null {
   const api = getEditorApi();
   if (!api) return null;
@@ -201,8 +220,14 @@ function ExportBody() {
     const fresh = snapshot(sceneTitle) ?? snap;
     if (!fresh) return;
     const { renderExport } = await import("@/export/render");
-    const res = await run((signal, onProgress) =>
-      renderExport(fresh, opts, { signal, onProgress }),
+    const res = await run(async (signal, onProgress) =>
+      renderExport(
+        opts.format === "pdf" && opts.pdf.allPages
+          ? { ...fresh, pages: await scenePages(fresh) }
+          : fresh,
+        opts,
+        { signal, onProgress },
+      ),
     );
     if (res) {
       downloadBlob(res.blob, res.filename);
@@ -223,6 +248,7 @@ function ExportBody() {
     if (ok) setNotice(`Copied ${as.toUpperCase()} to the clipboard.`);
   }
 
+  const pageCount = useWorkspace((s) => s.active?.pages.length ?? 1);
   const frames = snap ? listFrames(snap.elements) : [];
   const isRaster = opts.format === "png";
   const canEmbed = opts.format === "png" || opts.format === "svg";
@@ -469,6 +495,16 @@ function ExportBody() {
                   onChange={(e) => update({ pdf: { framesAsPages: e.target.checked } })}
                 />
                 One page per frame{frames.length === 0 ? " (no frames in this scene)" : ""}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  disabled={pageCount < 2}
+                  checked={opts.pdf.allPages}
+                  onChange={(e) => update({ pdf: { allPages: e.target.checked } })}
+                />
+                Include every page of this scene
+                {pageCount < 2 ? " (this scene has one page)" : ` (${pageCount} pages)`}
               </label>
             </fieldset>
           )}

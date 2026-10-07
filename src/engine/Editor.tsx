@@ -26,6 +26,7 @@ import { importExcalidrawFile } from "@/persistence/backup";
 import { PageTabs } from "@/ui/pages/PageTabs";
 import { HistoryDialog } from "@/ui/history/HistoryDialog";
 import { DslDialog } from "@/ui/dsl/DslDialog";
+import { AiDialog } from "@/ui/ai/AiDialog";
 import { MermaidDialog } from "@/ui/mermaid/MermaidDialog";
 import { ShareDialog } from "@/ui/share/ShareDialog";
 import { SlidesDialog } from "@/ui/slides/SlidesDialog";
@@ -118,6 +119,7 @@ function Workspace() {
       <HistoryDialog />
       <DslDialog />
       <MermaidDialog />
+      <AiDialog />
       <ShareDialog />
       <SlidesDialog />
       <PresentOverlay />

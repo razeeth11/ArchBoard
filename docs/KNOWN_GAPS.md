@@ -54,9 +54,9 @@ Phase 5 (Smart Components) specifics:
 
 Phase 6 (productivity) specifics:
 
-- **Multi-page PDF of a whole scene is not offered**: PDF pages come from frames ("Export deck as PDF"); the other pages of a scene export one at a time.
+- Multi-page PDF: the export dialog's "Include every page of this scene" option writes every page (empty pages are skipped); frames still become PDF pages with "One page per frame". Other formats export the open page only.
 - Version history compares element counts/ids (added, removed, changed); there is no per-property visual diff overlay. Previews are side by side.
-- Comments are single local notes (no replies, authors or notifications) and are not part of backups or share links yet.
+- Comments are single local notes (no replies, authors or notifications). They are included in backups but not in share links or single-scene exports.
 - Pins are drawn over the canvas and follow scroll/zoom; they are not announced to screen readers beyond the panel list.
 - Presenting needs at least one frame. Laser uses Excalidraw's laser tool; there is no timer or presenter window, and exiting fullscreen with Esc ends the presentation.
 - Auto-layout moves whole groups as units and ignores unconnected shapes' relationships; frames and containers are not laid out as ELK hierarchies.
@@ -64,7 +64,7 @@ Phase 6 (productivity) specifics:
 - Mermaid import: flowchart, sequence and class diagrams become shapes; other types arrive as images (library behaviour). Mermaid export covers rectangles, ellipses, diamonds and bound arrows only. The importer needs a strict-CSP review in Phase 8.
 - DSL: no editor autocomplete or syntax colours (errors only); kinds and techs are the built-in catalogue.
 - Share links: a view link is not access control (anyone with the whole link can read it); images make links long and are optional; the link is limited to what a URL can carry.
-- Style presets do not yet change how newly inserted library items or DSL diagrams are drawn; they restyle what exists and set the pen defaults.
+- Style presets also set the look (roughness, stroke colour, font) of newly inserted library items, kits, smart components and DSL diagrams. Fill colours of generated content stay category-coloured.
 
 Phase 7 (content and SEO) specifics:
 
@@ -79,7 +79,7 @@ Phase 7 (content and SEO) specifics:
 
 Phase 8 (hardening) specifics:
 
-- **Not built: BYO-key AI diagram generation and WebRTC live collaboration.** Both were optional in the brief. There is no code for either; the README and docs do not claim them.
+- **BYO-key AI** is built (Tools, Draw with AI): text in, DSL out, opened in the editor for review. It is opt-in, calls api.anthropic.com straight from the browser with the user's key, and was tested against a mocked endpoint only (no real key was used). **WebRTC live collaboration is not built**: it needs a signalling relay, which conflicts with the no-backend rule; there is no code for it and the docs do not claim it.
 - **The pre-editor JS budget is not met** (about 176 kB gzip against 120 kB): that is the Next.js and React runtime. See PERFORMANCE.md.
 - **Excalidraw's third-party font fallback.** The engine lists an `esm.sh` URL after every local font URL. Under the shipped CSP the browser logs a blocked-font message for it; the local fonts load normally and an e2e test proves no request leaves the origin. The noise is filtered in the CSP test only.
 - **Style CSP** needs `'unsafe-inline'` (engine limitation). **Hosting:** `_headers` is for Netlify and Cloudflare Pages; other hosts need the policy translated by hand, and the script hashes change with every build.
