@@ -12,6 +12,9 @@ export default function Route() {
   return (
     <Page title="Changelog">
       <ul className="text-muted list-disc space-y-1 pl-5">
+        <li>
+          0.8.0: offline support, a strict content security policy, performance and security docs.
+        </li>
         <li>0.7.0: 47 templates, guides, comparisons and a component catalog.</li>
         <li>
           0.6.0: pages, version history, auto-layout, diagram DSL, Mermaid, share links, slides,

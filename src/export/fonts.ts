@@ -8,46 +8,48 @@ export interface Face {
   ttf: Uint8Array;
 }
 
-interface EmscriptenModule {
-  calledRun?: boolean;
-  onRuntimeInitialized?: () => void;
-  decompress?: (b: Uint8Array) => Uint8Array | false;
-}
-
-let decompressorPromise: Promise<(b: Uint8Array) => Uint8Array> | null = null;
+type Decompress = (b: Uint8Array) => Promise<Uint8Array>;
+let decompressorPromise: Promise<Decompress> | null = null;
 
 const assetUrl = (name: string) =>
   `${(window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH ?? "/"}${name}`;
 
 /**
- * wawoff2's emscripten glue only exports itself under Node (`module.exports = Module` sits behind an
- * ENVIRONMENT_IS_NODE check), so once bundled for the browser it exports nothing. We therefore load
- * the glue as a same-origin classic script (no eval, CSP-friendly) after pre-seeding the global
- * `Module` it extends, and wait for its runtime-initialized callback.
+ * wawoff2's emscripten glue builds functions with `new Function` (embind), which a strict CSP forbids.
+ * Rather than weaken the page's policy, the decoder runs in a dedicated worker script
+ * (`woff2-worker.js`, created by scripts/copy-excalidraw-assets.mjs) that is served with its own,
+ * narrower CSP allowing eval. The worker has no DOM and no network; it only turns font bytes into TTF.
  */
 function woff2Decompressor() {
-  return (decompressorPromise ??= new Promise<(b: Uint8Array) => Uint8Array>((resolve, reject) => {
-    const w = window as unknown as { Module?: EmscriptenModule };
-    const mod: EmscriptenModule = {};
+  return (decompressorPromise ??= new Promise<Decompress>((resolve, reject) => {
+    const worker = new Worker(assetUrl("woff2-worker.js"));
+    const pending = new Map<number, { ok: (b: Uint8Array) => void; err: (e: Error) => void }>();
+    let seq = 0;
     const timer = setTimeout(() => reject(new Error("Font engine failed to initialize")), 15_000);
-    mod.onRuntimeInitialized = () => {
-      clearTimeout(timer);
-      // Don't leave a global behind, but only after the glue's own postRun hooks have finished.
-      setTimeout(() => (w.Module = undefined), 0);
-      resolve((b) => {
-        const out = mod.decompress?.(b);
-        if (!out) throw new Error("Invalid WOFF2 font");
-        return out;
-      });
-    };
-    w.Module = mod;
-    const el = document.createElement("script");
-    el.src = assetUrl("woff2-decompress.js");
-    el.onerror = () => {
+    worker.onerror = () => {
       clearTimeout(timer);
       reject(new Error("Could not load the font engine"));
     };
-    document.head.appendChild(el);
+    worker.onmessage = (e: MessageEvent) => {
+      const d = e.data as { ready?: true; id?: number; ttf?: Uint8Array; error?: string };
+      if (d.ready) {
+        clearTimeout(timer);
+        resolve(
+          (bytes) =>
+            new Promise<Uint8Array>((ok, err) => {
+              const id = ++seq;
+              pending.set(id, { ok, err });
+              worker.postMessage({ id, woff2: bytes });
+            }),
+        );
+        return;
+      }
+      const p = d.id ? pending.get(d.id) : undefined;
+      if (!p) return;
+      pending.delete(d.id!);
+      if (d.ttf) p.ok(d.ttf);
+      else p.err(new Error(d.error ?? "Invalid WOFF2 font"));
+    };
   }).catch((e) => {
     decompressorPromise = null;
     throw e;
@@ -89,8 +91,7 @@ export async function loadFaces(sources: EmbeddedFontSource[]): Promise<Face[]> 
   const faces: Face[] = [];
   for (const [i, src] of sources.entries()) {
     try {
-      // Copy: the decoder returns a view into wasm memory that the next call overwrites.
-      const ttf = Uint8Array.from(decompress(src.woff2));
+      const ttf = await decompress(src.woff2);
       const ab = ttf.buffer.slice(ttf.byteOffset, ttf.byteOffset + ttf.byteLength) as ArrayBuffer;
       faces.push({
         id: `${src.family.replace(/[^A-Za-z0-9]/g, "")}-${i}`,

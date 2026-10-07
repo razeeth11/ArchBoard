@@ -18,6 +18,7 @@ import { CreateSmartDialog } from "@/ui/smart/CreateSmartDialog";
 import { JsonDefDialog } from "@/ui/smart/JsonDefDialog";
 import { useSmart } from "@/store/smart";
 import { ComponentsPanel } from "@/ui/library/ComponentsPanel";
+import { registerServiceWorker } from "@/pwa/register";
 import { ShareViewer } from "@/ui/share/ShareViewer";
 import { decodeShare, parseFragment, type SharePayload } from "@/share/link";
 import { payloadToExcalidrawJson } from "@/share/payload";
@@ -62,6 +63,9 @@ function Workspace() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    registerServiceWorker();
   }, []);
   useEffect(() => {
     void useUi.getState().hydrate();

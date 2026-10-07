@@ -90,3 +90,11 @@ See `docs/KNOWN_GAPS.md` in the repo for the honest list of what is not built ye
 4. `/guides`, `/vs`, `/components` and a `/components/<id>` page: links work, tables read well.
 5. Paste a page URL into a link previewer (after deploying) to see the social card.
 6. `pnpm build && pnpm seo:validate` and `pnpm lhci` should both pass.
+
+## 8. Offline, install and security
+
+1. Run the built site (`pnpm start`, or open `manual-test/`) on localhost. Open `/app`, draw something, wait ~10 s, then turn the network off (DevTools, Network, Offline) and reload: the editor and your scene load, and edits still save.
+2. Redeploy a changed build and reopen the app: a "new version is ready" toast offers Reload; nothing reloads by itself.
+3. In DevTools, Application, Service Workers: one worker for `/`; Cache Storage has `archboard-precache-…`.
+4. Network tab while exporting PNG, SVG, PDF and using the DSL: only requests to your own origin.
+5. `out/csp.txt` is the page policy; confirm the console stays free of CSP errors (apart from blocked `esm.sh` font fallbacks, a known gap).

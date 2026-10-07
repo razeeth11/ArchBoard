@@ -76,3 +76,15 @@ Phase 7 (content and SEO) specifics:
 - Structured data is limited to WebApplication, BreadcrumbList, ItemList, TechArticle and CreativeWork. FAQ, HowTo and review markup are intentionally not used.
 - Comparison pages are written from public knowledge of each product at the review date; they are not endorsed by, or affiliated with, the other products.
 - All content is English; i18n scaffolding is Phase 8.
+
+Phase 8 (hardening) specifics:
+
+- **Not built: BYO-key AI diagram generation and WebRTC live collaboration.** Both were optional in the brief. There is no code for either; the README and docs do not claim them.
+- **The pre-editor JS budget is not met** (about 176 kB gzip against 120 kB): that is the Next.js and React runtime. See PERFORMANCE.md.
+- **Excalidraw's third-party font fallback.** The engine lists an `esm.sh` URL after every local font URL. Under the shipped CSP the browser logs a blocked-font message for it; the local fonts load normally and an e2e test proves no request leaves the origin. The noise is filtered in the CSP test only.
+- **Style CSP** needs `'unsafe-inline'` (engine limitation). **Hosting:** `_headers` is for Netlify and Cloudflare Pages; other hosts need the policy translated by hand, and the script hashes change with every build.
+- **Service worker:** first-visit offline readiness takes a few seconds after load (the precache installs in the background); a hard refresh while offline before that finishes will not work. Updates are applied only when the user chooses Reload.
+- Offline support was tested in Chromium. Firefox and WebKit run in CI only (not available in this sandbox).
+- **Scale:** tested with 5,000 (automated) and 20,000 (one-off) plain rectangles. Scenes dominated by images, long text or many smart components were not benchmarked. Phones were not tested.
+- **i18n** is a scaffold: only English strings exist and only the top toolbar and update prompt use the catalogue.
+- **Accessibility:** automated axe checks cover the site pages and key dialogs. There has been no screen-reader walkthrough, and the canvas itself is not accessible beyond what Excalidraw provides.

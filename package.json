@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/build-pwa.mjs",
     "start": "npx serve out -l 3000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

@@ -14,4 +14,4 @@ CHROMIUM_PATH=/path/to/chromium pnpm test:e2e   # CHROMIUM_PATH optional
 
 Deploy `out/` to any static host (Vercel, Netlify, Cloudflare Pages). No environment variables required.
 
-Status: Phase 7 of 8 (content and SEO). See `docs/KNOWN_GAPS.md`.
+Status: all 8 phases delivered (see docs/KNOWN_GAPS.md for what is not built). See `docs/KNOWN_GAPS.md`.

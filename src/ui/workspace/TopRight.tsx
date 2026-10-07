@@ -5,6 +5,7 @@ import { DropdownMenu } from "radix-ui";
 import { getEditorApi } from "@/engine/apiRef";
 import { applyLayout } from "@/layout/apply";
 import { LAYOUTS } from "@/layout/elk";
+import { t } from "@/i18n/messages";
 import { usePresent } from "@/present/slides";
 import { useUi } from "@/store/ui";
 import { useWorkspace } from "@/store/workspace";
@@ -26,23 +27,23 @@ export function WorkspaceTopRight() {
       <SaveStatus />
       <button
         type="button"
-        aria-label="Components"
+        aria-label={t("toolbar.components")}
         aria-expanded={componentsOpen}
         aria-controls="components-panel"
         onClick={() => useUi.getState().setComponentsOpen(!componentsOpen)}
         className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
       >
-        <LayoutGrid size={18} aria-hidden /> Components
+        <LayoutGrid size={18} aria-hidden /> {t("toolbar.components")}
       </button>
       <ToolsMenu />
       <button
         type="button"
-        aria-label="Export"
+        aria-label={t("toolbar.export")}
         title="Export (Ctrl/Cmd+Shift+E)"
         onClick={() => useUi.getState().setExportOpen(true)}
         className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
       >
-        <Download size={18} aria-hidden /> Export
+        <Download size={18} aria-hidden /> {t("toolbar.export")}
       </button>
       <button
         type="button"
@@ -58,13 +59,13 @@ export function WorkspaceTopRight() {
       </button>
       <button
         type="button"
-        aria-label="Scenes"
+        aria-label={t("toolbar.scenes")}
         aria-expanded={open}
         aria-controls="workspace-panel"
         onClick={() => setOpen(!open)}
         className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
       >
-        <PanelLeft size={18} aria-hidden /> Scenes
+        <PanelLeft size={18} aria-hidden /> {t("toolbar.scenes")}
       </button>
     </div>
   );
@@ -78,10 +79,10 @@ function ToolsMenu() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        aria-label="Tools"
+        aria-label={t("toolbar.tools")}
         className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
       >
-        <Wrench size={18} aria-hidden /> Tools
+        <Wrench size={18} aria-hidden /> {t("toolbar.tools")}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
