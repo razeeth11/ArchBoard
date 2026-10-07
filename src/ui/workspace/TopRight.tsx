@@ -1,6 +1,7 @@
 "use client";
 
-import { Monitor, Moon, PanelLeft, Sun } from "lucide-react";
+import { Download, Monitor, Moon, PanelLeft, Sun } from "lucide-react";
+import { useUi } from "@/store/ui";
 import { useWorkspace } from "@/store/workspace";
 import { usePrefs, resolveTheme, type ThemePref } from "@/store/prefs";
 import { SaveStatus } from "./SaveStatus";
@@ -17,6 +18,15 @@ export function WorkspaceTopRight() {
   return (
     <div className="flex items-center gap-2">
       <SaveStatus />
+      <button
+        type="button"
+        aria-label="Export"
+        title="Export (Ctrl/Cmd+Shift+E)"
+        onClick={() => useUi.getState().setExportOpen(true)}
+        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
+      >
+        <Download size={18} aria-hidden /> Export
+      </button>
       <button
         type="button"
         aria-label={`Theme: ${theme}. Switch to ${NEXT[theme]}`}

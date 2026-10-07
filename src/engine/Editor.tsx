@@ -8,6 +8,8 @@ import { SceneCanvas } from "./SceneCanvas";
 import { BackupReminder } from "@/ui/workspace/BackupReminder";
 import { ConflictDialog, RecoveryDialog } from "@/ui/workspace/dialogs";
 import { EditorErrorBoundary } from "@/ui/workspace/ErrorBoundary";
+import { ExportDialog } from "@/ui/export/ExportDialog";
+import { useUi } from "@/store/ui";
 import { ToastHost } from "@/ui/workspace/ToastHost";
 import { WorkspacePanel } from "@/ui/workspace/WorkspacePanel";
 
@@ -26,6 +28,16 @@ function Workspace() {
     document.documentElement.dataset.theme = resolveTheme(pref);
   }, [pref]);
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        useUi.getState().setExportOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
     void init();
   }, [init]);
 
@@ -33,6 +45,7 @@ function Workspace() {
     <>
       {active ? <SceneCanvas active={active} /> : <div className="bg-surface h-dvh" aria-hidden />}
       <WorkspacePanel />
+      <ExportDialog />
       <ConflictDialog />
       <RecoveryDialog />
       <BackupReminder />

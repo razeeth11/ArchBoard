@@ -174,15 +174,11 @@ export async function buildExcalidrawFile(sceneId: string, pageId?: string): Pro
   });
 }
 
-/** Parse a `.excalidraw` JSON document into a new scene. Image data URLs are converted to blobs. */
-export async function importExcalidrawFile(text: string, title: string): Promise<Scene> {
-  const data: unknown = JSON.parse(text);
-  if (!isRec(data) || data.type !== "excalidraw" || !Array.isArray(data.elements)) {
-    throw new Error("Not an Excalidraw scene file");
-  }
+/** Convert Excalidraw `files` (id → { dataURL, mimeType, created }) into content-addressed blobs + refs. */
+export async function filesToBlobs(files: Record<string, unknown>) {
   const blobs: BlobRecord[] = [];
   const fileRefs: Record<string, FileRef> = {};
-  for (const [id, f] of Object.entries(isRec(data.files) ? data.files : {})) {
+  for (const [id, f] of Object.entries(files)) {
     if (!isRec(f) || typeof f.dataURL !== "string") continue;
     const { bytes, mime } = dataURLToBytes(f.dataURL);
     const hash = await sha256Hex(bytes);
@@ -193,6 +189,16 @@ export async function importExcalidrawFile(text: string, title: string): Promise
       created: Number(f.created ?? Date.now()),
     };
   }
+  return { blobs, fileRefs };
+}
+
+/** Parse a `.excalidraw` JSON document into a new scene. Image data URLs are converted to blobs. */
+export async function importExcalidrawFile(text: string, title: string): Promise<Scene> {
+  const data: unknown = JSON.parse(text);
+  if (!isRec(data) || data.type !== "excalidraw" || !Array.isArray(data.elements)) {
+    throw new Error("Not an Excalidraw scene file");
+  }
+  const { blobs, fileRefs } = await filesToBlobs(isRec(data.files) ? data.files : {});
   const { createScene } = await import("./repo");
   const bg =
     isRec(data.appState) && typeof data.appState.viewBackgroundColor === "string"
@@ -214,4 +220,21 @@ export async function importAny(text: string, filename: string): Promise<ImportR
   const title = filename.replace(/\.(excalidraw|json)$/i, "") || "Imported";
   await importExcalidrawFile(text, title);
   return { scenes: 1, folders: 0 };
+}
+
+/** Import a PNG or SVG that carries an embedded scene (exported with "Embed scene data"). */
+export async function importEmbeddedImage(file: File): Promise<Scene> {
+  const { loadFromBlob } = await import("@excalidraw/excalidraw");
+  const data = await loadFromBlob(file, null, null);
+  const { blobs, fileRefs } = await filesToBlobs((data.files ?? {}) as Record<string, unknown>);
+  const { createScene } = await import("./repo");
+  return createScene({
+    title: file.name.replace(/\.(png|svg)$/i, "") || "Imported",
+    elements: data.elements.filter((e) => !e.isDeleted) as ExcalidrawElement[],
+    appState: data.appState.viewBackgroundColor
+      ? { viewBackgroundColor: data.appState.viewBackgroundColor }
+      : {},
+    fileRefs,
+    blobs,
+  });
 }

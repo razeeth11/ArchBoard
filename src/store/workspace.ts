@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { onTabMessage, postTab } from "@/persistence/channel";
 import * as repo from "@/persistence/repo";
-import { buildBackup, importAny } from "@/persistence/backup";
+import { buildBackup, importAny, importEmbeddedImage } from "@/persistence/backup";
+import { getEditorApi } from "@/engine/apiRef";
 import type { SaveStatus } from "@/persistence/autosave";
 import { CorruptSceneError, type Folder, type Page, type Scene } from "@/persistence/types";
 import { useToasts } from "./toasts";
@@ -246,9 +247,22 @@ export const useWorkspace = create<WorkspaceState>((set, get) => {
 
     async importFiles(files) {
       let scenes = 0;
+      let libs = 0;
       for (const f of Array.from(files)) {
         try {
-          scenes += (await importAny(await f.text(), f.name)).scenes;
+          if (/\.(png|svg)$/i.test(f.name)) {
+            await importEmbeddedImage(f);
+            scenes += 1;
+          } else if (/\.excalidrawlib$/i.test(f.name)) {
+            const { loadLibraryFromBlob } = await import("@excalidraw/excalidraw");
+            const items = await loadLibraryFromBlob(f);
+            const api = getEditorApi();
+            if (!api) throw new Error("Open a scene first");
+            await api.updateLibrary({ libraryItems: items, merge: true });
+            libs += items.length;
+          } else {
+            scenes += (await importAny(await f.text(), f.name)).scenes;
+          }
         } catch (e) {
           useToasts
             .getState()
@@ -261,6 +275,10 @@ export const useWorkspace = create<WorkspaceState>((set, get) => {
         useToasts
           .getState()
           .push({ message: `Imported ${scenes} scene${scenes === 1 ? "" : "s"}` });
+      if (libs)
+        useToasts
+          .getState()
+          .push({ message: `Added ${libs} library item${libs === 1 ? "" : "s"}` });
     },
   };
 });

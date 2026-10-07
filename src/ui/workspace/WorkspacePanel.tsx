@@ -411,7 +411,7 @@ export function WorkspacePanel() {
         <input
           ref={fileInput}
           type="file"
-          accept=".json,.excalidraw,application/json"
+          accept=".json,.excalidraw,.excalidrawlib,.png,.svg,application/json,image/png,image/svg+xml"
           multiple
           hidden
           data-testid="import-input"

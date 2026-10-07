@@ -18,6 +18,7 @@ import { registerController, useWorkspace, type ActiveScene } from "@/store/work
 import { resolveTheme, usePrefs } from "@/store/prefs";
 import { WorkspaceTopRight } from "@/ui/workspace/TopRight";
 import { sha256Hex } from "@/persistence/blobs";
+import { setEditorApi } from "./apiRef";
 
 declare global {
   interface Window {
@@ -228,13 +229,22 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
         initialData={initialData}
         excalidrawAPI={(a) => {
           setApi(a);
+          setEditorApi(a);
           window.__archboard = { api: a };
           void repo.loadLibraryItems().then((items) => {
             if (items.length) void a.updateLibrary({ libraryItems: items as never, merge: false });
           });
         }}
         onLibraryChange={(items) => void repo.saveLibraryItems(items as unknown[])}
-        UIOptions={{ canvasActions: { toggleTheme: false } }}
+        UIOptions={{
+          canvasActions: {
+            toggleTheme: false,
+            export: false,
+            saveAsImage: false,
+            loadScene: false,
+            saveToActiveFile: false,
+          },
+        }}
         renderTopRightUI={() => <WorkspaceTopRight />}
         onChange={(elements, appState, files) => {
           ctl.latest = { e: elements, s: appState, f: files as never };

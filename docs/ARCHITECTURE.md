@@ -11,3 +11,12 @@ Routes live in `app/` and are statically generated; `/app` renders a server intr
 - `autosave.ts` debounces (500 ms), serializes saves, pauses on conflict. `SceneCanvas.tsx` flushes on `visibilitychange`, `pagehide`, `beforeunload`, and unmount.
 - `channel.ts` BroadcastChannel notifies other tabs; `store/workspace.ts` drives the sidebar, scene switching, trash (30 days), recovery and conflict dialogs.
 - `backup.ts` full JSON backup/import and `.excalidraw`-compatible per-scene import/export.
+
+## Export (Phase 3)
+
+- `src/export/options.ts` is pure and unit-tested: option schema + `sanitizeOptions`, element selection (`pickElements`: scene / selection incl. bound text and frame contents / frame), raster limits, PDF page layout, file names, SVG title/desc.
+- `render.ts` (lazy) builds PNG (`exportToBlob` with `getDimensions` for 1–4×), SVG (`exportToSvg` + accessibility + optional outlines), JSON (`serializeAsJSON`), PDF (`pdf.ts`), previews and clipboard copies. Every stage calls `step()` (`abort.ts`) for progress, UI yielding and cancellation.
+- `fonts.ts` extracts Excalidraw's embedded woff2 subsets, decodes them (wawoff2) and parses them (opentype.js) to (a) outline text and (b) bind PDF text runs to registered jsPDF fonts.
+- `pdf.ts` loads jsPDF + svg2pdf only on demand, one SVG per page.
+- `ui/export/ExportDialog.tsx`: live preview, remembered settings, progress + cancel. Opened by the toolbar button or Ctrl/Cmd+Shift+E.
+- Import additionally accepts PNG/SVG with embedded scenes and `.excalidrawlib` files.
