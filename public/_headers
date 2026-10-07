@@ -1,0 +1,7 @@
+# Netlify / Cloudflare Pages. Next exports generated social images without a file extension.
+/opengraph-image
+  Content-Type: image/png
+/*/opengraph-image
+  Content-Type: image/png
+/*/*/opengraph-image
+  Content-Type: image/png

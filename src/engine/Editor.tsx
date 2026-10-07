@@ -37,6 +37,10 @@ import { WorkspacePanel } from "@/ui/workspace/WorkspacePanel";
 
 // Fonts and locales are served from our own origin so the editor works offline and under a strict CSP.
 if (typeof window !== "undefined") {
+  // Build-time tooling hook (scripts/build-previews.mjs): renders the catalog thumbnails.
+  (window as unknown as { __archboardTools: unknown }).__archboardTools = {
+    templateSvgs: async () => (await import("@/content/preview")).allTemplateSvgs(),
+  };
   (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
     "/excalidraw-assets/";
 }
@@ -136,6 +140,32 @@ type Gate =
 function ShareGate() {
   const [gate, setGate] = useState<Gate>({ state: "checking" });
   useEffect(() => {
+    // `?template=slug` opens a new scene built from that template (a link from the catalog).
+    const tpl = new URLSearchParams(location.search).get("template");
+    if (tpl) {
+      let alive = true;
+      void import("@/content/openTemplate")
+        .then((m) => m.createSceneFromTemplate(tpl))
+        .then((s) => {
+          if (!alive) return;
+          const url = new URL(location.href);
+          url.searchParams.delete("template");
+          url.searchParams.set("scene", s.id);
+          history.replaceState(null, "", url);
+          setGate({ state: "app" });
+        })
+        .catch(
+          (e) =>
+            alive &&
+            setGate({
+              state: "error",
+              message: e instanceof Error ? e.message : "Template failed",
+            }),
+        );
+      return () => {
+        alive = false;
+      };
+    }
     const frag = parseFragment(location.hash);
     if (!frag) {
       queueMicrotask(() => setGate({ state: "app" }));

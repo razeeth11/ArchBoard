@@ -65,3 +65,14 @@ Phase 6 (productivity) specifics:
 - DSL: no editor autocomplete or syntax colours (errors only); kinds and techs are the built-in catalogue.
 - Share links: a view link is not access control (anyone with the whole link can read it); images make links long and are optional; the link is limited to what a URL can carry.
 - Style presets do not yet change how newly inserted library items or DSL diagrams are drawn; they restyle what exists and set the pen defaults.
+
+Phase 7 (content and SEO) specifics:
+
+- **Templates are original but unreviewed by domain experts.** The copy describes common textbook designs and trade-offs; it is not benchmarked advice. Have an engineer read any template you intend to rely on.
+- Thumbnails use a system sans-serif for labels (the editor uses the hand-drawn font). Regenerate with `pnpm build && pnpm previews:build` after changing a template; stale thumbnails are not detected automatically.
+- Only smart components get their own `/components/<id>` pages. Building blocks and technology logos are listed on `/components` but have no individual pages, to avoid thin content.
+- Open Graph cards are text-only; they do not show the diagram. Generated card files have no extension and rely on a `Content-Type` header (`public/_headers` covers Netlify and Cloudflare Pages; other hosts need an equivalent in Phase 8).
+- Lighthouse numbers were measured on the sandbox with simulated mobile throttling (performance 98-99, accessibility 100, best practices 96, SEO 100, CLS 0). Real-world field data does not exist yet.
+- Structured data is limited to WebApplication, BreadcrumbList, ItemList, TechArticle and CreativeWork. FAQ, HowTo and review markup are intentionally not used.
+- Comparison pages are written from public knowledge of each product at the review date; they are not endorsed by, or affiliated with, the other products.
+- All content is English; i18n scaffolding is Phase 8.

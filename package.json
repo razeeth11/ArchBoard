@@ -22,6 +22,9 @@
     "predev": "node scripts/copy-excalidraw-assets.mjs",
     "prebuild": "node scripts/copy-excalidraw-assets.mjs",
     "icons:build": "node scripts/build-icons.mjs",
+    "previews:build": "node scripts/build-previews.mjs",
+    "seo:validate": "node scripts/seo-validate.mjs",
+    "lhci": "lhci autorun",
     "manual": "pnpm build && node scripts/make-manual-folder.mjs"
   },
   "dependencies": {
@@ -50,6 +53,7 @@
     "@iconify-json/lucide": "^1.2.140",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.99",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",

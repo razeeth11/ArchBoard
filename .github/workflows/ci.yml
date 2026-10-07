@@ -12,6 +12,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm build
+      - run: pnpm seo:validate
+      - run: pnpm lhci
       - run: pnpm exec playwright install --with-deps
       - run: pnpm test:e2e
         env: { ALL_BROWSERS: "1", CI: "1" }

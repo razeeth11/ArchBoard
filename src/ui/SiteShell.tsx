@@ -46,11 +46,19 @@ export function SiteFooter() {
   );
 }
 
-export function Page({ title, children }: { title: string; children: React.ReactNode }) {
+export function Page({
+  title,
+  children,
+  wide,
+}: {
+  title: string;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-4 py-10">
+      <main className={`mx-auto px-4 py-10 ${wide ? "max-w-5xl" : "max-w-3xl"}`}>
         <h1 className="mb-4 text-3xl font-bold">{title}</h1>
         {children}
       </main>

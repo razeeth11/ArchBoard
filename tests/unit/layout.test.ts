@@ -156,3 +156,17 @@ describe("layoutElements", () => {
     void outside;
   });
 });
+
+describe("icons inside nodes", () => {
+  it("an ungrouped image inside a shape joins that shape's unit", () => {
+    const base = { angle: 0, isDeleted: false, groupIds: [], version: 1, versionNonce: 1 };
+    const els = [
+      { ...base, id: "r", type: "rectangle", x: 0, y: 0, width: 200, height: 100 },
+      { ...base, id: "i", type: "image", x: 80, y: 10, width: 40, height: 40 },
+      { ...base, id: "r2", type: "rectangle", x: 400, y: 0, width: 200, height: 100 },
+    ] as never;
+    const { units, owner } = buildUnits(els);
+    expect(units).toHaveLength(2);
+    expect(owner.get("i")).toBe(owner.get("r"));
+  });
+});

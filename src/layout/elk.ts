@@ -75,9 +75,27 @@ export function buildUnits(elements: readonly El[]): { units: Unit[]; owner: Map
   const byId = new Map(live.map((e) => [e.id, e]));
   const groups = new Map<string, El[]>();
   const owner = new Map<string, string>();
+  const shapes = live.filter((e) => ["rectangle", "ellipse", "diamond"].includes(e.type));
+  // An icon sitting inside a shape (the DSL puts one in every node) belongs to that shape's unit.
+  const iconHost = (e: El) => {
+    if (e.type !== "image" || (e as unknown as { groupIds?: string[] }).groupIds?.length)
+      return undefined;
+    let best: El | undefined;
+    for (const s of shapes) {
+      const inside =
+        e.x >= s.x - 1 &&
+        e.y >= s.y - 1 &&
+        e.x + e.width <= s.x + s.width + 1 &&
+        e.y + e.height <= s.y + s.height + 1;
+      if (inside && (!best || s.width * s.height < best.width * best.height)) best = s;
+    }
+    return best;
+  };
   for (const e of live) {
     const host =
-      e.type === "text" && e.containerId && byId.has(e.containerId) ? byId.get(e.containerId)! : e;
+      e.type === "text" && e.containerId && byId.has(e.containerId)
+        ? byId.get(e.containerId)!
+        : (iconHost(e) ?? e);
     const groupIds = (host as unknown as { groupIds?: string[] }).groupIds ?? [];
     const key = groupIds.length ? `g:${groupIds[groupIds.length - 1]}` : host.id;
     if (!groups.has(key)) groups.set(key, []);

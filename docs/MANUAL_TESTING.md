@@ -81,3 +81,12 @@ See `docs/KNOWN_GAPS.md` in the repo for the honest list of what is not built ye
 8. **Slides**: draw frames (F), Tools → Slides and notes, add notes, Present: arrows/space/PageUp/PageDown, L laser, N notes, Esc exits.
 9. **Comments**: select a shape, Tools → Comments, add; pin appears; Resolve hides it.
 10. **Styles**: Tools → Style presets → Blueprint on a selection; save your own from a styled shape; click brand colours (Shift = fill).
+
+## 7. Content and SEO
+
+1. `/templates`: 47 cards in 7 categories; thumbnails load as you scroll; category chips jump to sections.
+2. Open a template page, press **Open in ArchBoard**: a new scene appears with arrows attached; your other scenes are untouched.
+3. Read two templates and two guides end to end: do the explanations match the picture?
+4. `/guides`, `/vs`, `/components` and a `/components/<id>` page: links work, tables read well.
+5. Paste a page URL into a link previewer (after deploying) to see the social card.
+6. `pnpm build && pnpm seo:validate` and `pnpm lhci` should both pass.
