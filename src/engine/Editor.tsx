@@ -1,7 +1,7 @@
 "use client";
 
 import "@excalidraw/excalidraw/index.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { resolveTheme, usePrefs } from "@/store/prefs";
 import { useWorkspace } from "@/store/workspace";
 import { SceneCanvas } from "./SceneCanvas";
@@ -10,6 +10,28 @@ import { ConflictDialog, RecoveryDialog } from "@/ui/workspace/dialogs";
 import { EditorErrorBoundary } from "@/ui/workspace/ErrorBoundary";
 import { ExportDialog } from "@/ui/export/ExportDialog";
 import { useUi } from "@/store/ui";
+import { useToasts } from "@/store/toasts";
+import { getEditorApi } from "./apiRef";
+import { importSvgIntoScene, isSvgFile, looksLikeSvg, readSvgFile } from "@/library/svgImport";
+import { SmartInspector } from "@/ui/smart/SmartInspector";
+import { CreateSmartDialog } from "@/ui/smart/CreateSmartDialog";
+import { JsonDefDialog } from "@/ui/smart/JsonDefDialog";
+import { useSmart } from "@/store/smart";
+import { ComponentsPanel } from "@/ui/library/ComponentsPanel";
+import { ShareViewer } from "@/ui/share/ShareViewer";
+import { decodeShare, parseFragment, type SharePayload } from "@/share/link";
+import { payloadToExcalidrawJson } from "@/share/payload";
+import { importExcalidrawFile } from "@/persistence/backup";
+import { PageTabs } from "@/ui/pages/PageTabs";
+import { HistoryDialog } from "@/ui/history/HistoryDialog";
+import { DslDialog } from "@/ui/dsl/DslDialog";
+import { MermaidDialog } from "@/ui/mermaid/MermaidDialog";
+import { ShareDialog } from "@/ui/share/ShareDialog";
+import { SlidesDialog } from "@/ui/slides/SlidesDialog";
+import { PresentOverlay } from "@/ui/slides/PresentOverlay";
+import { CommentsPanel, CommentPins } from "@/ui/comments/CommentsPanel";
+import { StylesDialog } from "@/ui/styles/StylesDialog";
+import { CommandPalette } from "@/ui/palette/CommandPalette";
 import { ToastHost } from "@/ui/workspace/ToastHost";
 import { WorkspacePanel } from "@/ui/workspace/WorkspacePanel";
 
@@ -38,6 +60,41 @@ function Workspace() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   useEffect(() => {
+    void useUi.getState().hydrate();
+    void useSmart.getState().load();
+  }, []);
+  useEffect(() => {
+    // Pasted SVG markup or SVG files are sanitized by us instead of reaching the engine raw.
+    const onPaste = (e: ClipboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.closest("input,textarea,[contenteditable=true]") || t.isContentEditable)) return;
+      const api = getEditorApi();
+      const cd = e.clipboardData;
+      if (!api || !cd) return;
+      const file = Array.from(cd.files).find(isSvgFile);
+      const text = cd.getData("text/plain");
+      if (!file && !looksLikeSvg(text)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      void (file ? readSvgFile(file) : Promise.resolve(text))
+        .then((src) =>
+          importSvgIntoScene(
+            api,
+            src,
+            file?.name.replace(/\.svg$/i, "") ?? "pasted",
+            useUi.getState().svgMode,
+          ),
+        )
+        .catch((err) =>
+          useToasts
+            .getState()
+            .push({ message: err instanceof Error ? err.message : "Could not import that SVG" }),
+        );
+    };
+    document.addEventListener("paste", onPaste, true);
+    return () => document.removeEventListener("paste", onPaste, true);
+  }, []);
+  useEffect(() => {
     void init();
   }, [init]);
 
@@ -45,6 +102,21 @@ function Workspace() {
     <>
       {active ? <SceneCanvas active={active} /> : <div className="bg-surface h-dvh" aria-hidden />}
       <WorkspacePanel />
+      <ComponentsPanel />
+      <SmartInspector />
+      <CreateSmartDialog />
+      <JsonDefDialog />
+      <PageTabs />
+      <HistoryDialog />
+      <DslDialog />
+      <MermaidDialog />
+      <ShareDialog />
+      <SlidesDialog />
+      <PresentOverlay />
+      <CommentsPanel />
+      <CommentPins />
+      <StylesDialog />
+      <CommandPalette />
       <ExportDialog />
       <ConflictDialog />
       <RecoveryDialog />
@@ -54,10 +126,79 @@ function Workspace() {
   );
 }
 
+type Gate =
+  | { state: "checking" }
+  | { state: "app" }
+  | { state: "view"; payload: SharePayload }
+  | { state: "error"; message: string };
+
+/** A `#share=…` fragment decides what to show: the viewer, a fresh editable copy, or the normal app. */
+function ShareGate() {
+  const [gate, setGate] = useState<Gate>({ state: "checking" });
+  useEffect(() => {
+    const frag = parseFragment(location.hash);
+    if (!frag) {
+      queueMicrotask(() => setGate({ state: "app" }));
+      return;
+    }
+    let alive = true;
+    void (async () => {
+      try {
+        const { payload } = await decodeShare(location.hash);
+        if (!alive) return;
+        // The fragment is consumed so a reload or a copied URL bar does not re-import.
+        history.replaceState(null, "", location.pathname + location.search);
+        if (frag.mode === "view") {
+          setGate({ state: "view", payload });
+          return;
+        }
+        const s = await importExcalidrawFile(payloadToExcalidrawJson(payload), payload.title);
+        const url = new URL(location.href);
+        url.searchParams.set("scene", s.id);
+        history.replaceState(null, "", url);
+        setGate({ state: "app" });
+      } catch (e) {
+        if (alive)
+          setGate({ state: "error", message: e instanceof Error ? e.message : "Invalid link" });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (gate.state === "checking") return <div className="bg-surface h-dvh" aria-hidden />;
+  if (gate.state === "view")
+    return (
+      <ShareViewer
+        payload={gate.payload}
+        onCopy={(id) => {
+          const url = new URL(window.location.href);
+          url.searchParams.set("scene", id);
+          window.history.replaceState(null, "", url);
+          setGate({ state: "app" });
+        }}
+      />
+    );
+  if (gate.state === "error")
+    return (
+      <div
+        role="alert"
+        data-testid="share-error"
+        className="flex h-dvh flex-col items-center justify-center gap-3 p-6 text-center"
+      >
+        <p>This share link could not be opened: {gate.message}</p>
+        <a className="underline" href="/app">
+          Open ArchBoard
+        </a>
+      </div>
+    );
+  return <Workspace />;
+}
+
 export default function Editor() {
   return (
     <EditorErrorBoundary>
-      <Workspace />
+      <ShareGate />
     </EditorErrorBoundary>
   );
 }

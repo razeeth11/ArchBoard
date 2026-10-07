@@ -1,9 +1,11 @@
 import { expect, test as base } from "@playwright/test";
 
 /** Every page opened in a test must finish without console errors or uncaught exceptions. */
-export const test = base.extend<{ _noConsoleErrors: void }>({
+export const test = base.extend<{ _noConsoleErrors: void; allowedConsoleErrors: RegExp[] }>({
+  /** Messages a test deliberately provokes (e.g. a blocked network request). Default: none. */
+  allowedConsoleErrors: [[], { option: true }],
   _noConsoleErrors: [
-    async ({ context }, use) => {
+    async ({ context, allowedConsoleErrors }, use) => {
       const errors: string[] = [];
       const watch = (p: import("@playwright/test").Page) => {
         p.on("console", (m) => m.type() === "error" && errors.push(`${p.url()} ${m.text()}`));
@@ -12,7 +14,7 @@ export const test = base.extend<{ _noConsoleErrors: void }>({
       context.pages().forEach(watch);
       context.on("page", watch);
       await use();
-      expect(errors).toEqual([]);
+      expect(errors.filter((e) => !allowedConsoleErrors.some((re) => re.test(e)))).toEqual([]);
     },
     { auto: true },
   ],

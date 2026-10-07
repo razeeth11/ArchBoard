@@ -1,7 +1,7 @@
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 
 /** Bump when the stored shape changes; add a step to `migrations.ts` and a fixture under tests/fixtures. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 1; // row-level schema; Dexie store version is 2 (see db.ts)
 
 export interface Scene {
   id: string;
@@ -117,6 +117,14 @@ export interface RecoveryRecord {
   createdAt: number;
   reason: string;
   raw: unknown;
+}
+
+export interface SmartDefRecord {
+  id: string;
+  name: string;
+  /** The definition document (validated by `parseSmartDef` before use). */
+  def: unknown;
+  updatedAt: number;
 }
 
 export const TRASH_TTL_MS = 30 * 24 * 60 * 60 * 1000;

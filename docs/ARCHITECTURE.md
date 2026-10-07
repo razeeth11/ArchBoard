@@ -20,3 +20,15 @@ Routes live in `app/` and are statically generated; `/app` renders a server intr
 - `pdf.ts` loads jsPDF + svg2pdf only on demand, one SVG per page.
 - `ui/export/ExportDialog.tsx`: live preview, remembered settings, progress + cancel. Opened by the toolbar button or Ctrl/Cmd+Shift+E.
 - Import additionally accepts PNG/SVG with embedded scenes and `.excalidrawlib` files.
+
+## Library & toolkit (Phase 4)
+
+- `scripts/build-icons.mjs` + `scripts/icons.config.mjs`: curated icon extraction, license allowlist, `public/licenses/manifest.json` (drives `/credits`) and per-set license files.
+- `src/library/builder.ts`: `Builder` assembles Excalidraw element _skeletons_ (box/ellipse/diamond/text/line/arrow/icon) and collects icon files. `blocks.ts` (41 building blocks + 78 technology logos), `kits.ts` (57 shapes across UML, sequence, ERD, C4, flowchart/BPMN-lite, network, wireframe, data-flow) are pure data + builders.
+- `insert.ts`: skeleton → elements via `convertToExcalidrawElements`, grouped, placed (drop point or free spot near the viewport centre), files added, selected, undoable.
+- `svg.ts` sanitizer/normalizer, `svgEditable.ts` (browser-only vector → native shapes), `svgImport.ts`, `iconify.ts` (opt-in online search).
+- `ui/library/ComponentsPanel.tsx`: tabs Blocks / Tech / Kits / Icons / SVG, click or drag to insert. Canvas wiring (drop, paste interception) lives in `SceneCanvas.tsx` and `Editor.tsx`.
+
+## Smart Components (Phase 5)
+
+See `docs/SMART_COMPONENTS.md`. Flow: `def.generate(props)` → parts (stable roles) → `materialize` (converter + stable ids + metadata + arrow routing) → `insertSmart` / `regenerate` (`reconcile` merge, `rebindExternal` for outside arrows) → `api.updateScene` with an undoable capture. UI is in `src/ui/smart/`; custom definitions live in IndexedDB (`smartDefs`) and in the root element of each instance.

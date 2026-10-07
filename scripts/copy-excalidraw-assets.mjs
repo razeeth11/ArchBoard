@@ -20,4 +20,9 @@ cpSync(
   join(process.cwd(), "node_modules", "wawoff2", "build", "decompress_binding.js"),
   join(dest, "woff2-decompress.js"),
 );
+// ELK layout engine worker (auto-layout, DSL and Mermaid import run layout off the main thread).
+cpSync(
+  join(process.cwd(), "node_modules", "elkjs", "lib", "elk-worker.min.js"),
+  join(dest, "elk-worker.min.js"),
+);
 console.log("excalidraw assets copied to", dest);

@@ -82,15 +82,25 @@ export async function renderSvgElement(
   frame: ExcalidrawFrameLikeElement | null,
 ): Promise<SVGSVGElement> {
   const { exportToSvg } = await lib();
-  const svg = await exportToSvg({
-    elements: elements as never,
-    appState: exportAppState(scene, o),
-    files: usedFiles(elements, scene.files),
-    exportPadding: o.padding,
-    exportingFrame: frame as never,
-  });
-  applySvgAccessibility(svg, resolveTitle(scene, o), o.description);
-  return svg;
+  const hasText = elements.some((e) => e.type === "text");
+  let svg: SVGSVGElement | null = null;
+  // Excalidraw inlines the glyph subsets it needs. When two exports overlap (live preview + a download)
+  // the engine can occasionally hand one of them an SVG without its fonts, which would silently
+  // degrade PDFs and outlined text. Retry a couple of times instead of shipping a font-less file.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const attemptSvg = await exportToSvg({
+      elements: elements as never,
+      appState: exportAppState(scene, o),
+      files: usedFiles(elements, scene.files),
+      exportPadding: o.padding,
+      exportingFrame: frame as never,
+    });
+    svg = attemptSvg;
+    if (!hasText || attemptSvg.querySelector("style")?.textContent?.includes("@font-face")) break;
+    await new Promise((r) => setTimeout(r, 150 * (attempt + 1)));
+  }
+  applySvgAccessibility(svg!, resolveTitle(scene, o), o.description);
+  return svg!;
 }
 
 async function renderPng(scene: SceneSnapshot, o: ExportOptions, h: Hooks): Promise<RenderResult> {

@@ -1,6 +1,11 @@
 "use client";
 
-import { Excalidraw, getSceneVersion, reconcileElements } from "@excalidraw/excalidraw";
+import {
+  Excalidraw,
+  getSceneVersion,
+  reconcileElements,
+  viewportCoordsToSceneCoords,
+} from "@excalidraw/excalidraw";
 import type {
   AppState,
   BinaryFileData,
@@ -10,6 +15,7 @@ import type {
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { useEffect, useMemo, useState } from "react";
 import { Autosaver } from "@/persistence/autosave";
+import { SnapshotScheduler, takeSnapshot } from "@/persistence/history";
 import { postTab } from "@/persistence/channel";
 import * as repo from "@/persistence/repo";
 import { PageSession, type AppStateLike, type LiveFile } from "@/persistence/session";
@@ -19,6 +25,13 @@ import { resolveTheme, usePrefs } from "@/store/prefs";
 import { WorkspaceTopRight } from "@/ui/workspace/TopRight";
 import { sha256Hex } from "@/persistence/blobs";
 import { setEditorApi } from "./apiRef";
+import { DRAG_MIME, parsePayload } from "@/library/insert";
+import { importSvgIntoScene, isSvgFile, readSvgFile } from "@/library/svgImport";
+import { insertPayload } from "@/ui/library/ComponentsPanel";
+import { useToasts } from "@/store/toasts";
+import { useUi } from "@/store/ui";
+import { useSmart } from "@/store/smart";
+import { instanceOfSelection } from "@/smart/instance";
 
 declare global {
   interface Window {
@@ -27,6 +40,7 @@ declare global {
   }
 }
 
+const snapshots = new SnapshotScheduler();
 const THUMB_MIN_INTERVAL_MS = 8000;
 const THUMB_MAX_ELEMENTS = 3000;
 
@@ -94,6 +108,8 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
       session,
       saver,
       lastThumb: 0,
+      selKey: "",
+      smartSig: 0,
       latest: null as null | {
         e: readonly OrderedExcalidrawElement[];
         s: AppState;
@@ -176,6 +192,8 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
         rev,
       });
       void maybeThumbnail(elements, appState);
+      if (snapshots.onSave(ctl.session.sceneId))
+        void takeSnapshot(ctl.session.sceneId, { kind: "auto" }).catch(() => undefined);
     });
   }
 
@@ -219,9 +237,56 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
   }
 
   return (
-    <div className="h-dvh w-full" data-testid="editor-root">
+    <div
+      className="h-dvh w-full"
+      data-testid="editor-root"
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes(DRAG_MIME)) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }
+      }}
+      onDrop={(e) => {
+        const payload = parsePayload(e.dataTransfer.getData(DRAG_MIME));
+        const a = api ?? null;
+        if (!payload || !a) return;
+        e.preventDefault();
+        const at = viewportCoordsToSceneCoords(
+          { clientX: e.clientX, clientY: e.clientY },
+          a.getAppState(),
+        );
+        void insertPayload(payload, at);
+      }}
+      onDropCapture={(e) => {
+        // Dropped SVG files are sanitized by us rather than handed to the engine as-is.
+        const svg = Array.from(e.dataTransfer.files).find(isSvgFile);
+        const a = api ?? null;
+        if (!svg || !a) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const at = viewportCoordsToSceneCoords(
+          { clientX: e.clientX, clientY: e.clientY },
+          a.getAppState(),
+        );
+        void readSvgFile(svg)
+          .then((text) =>
+            importSvgIntoScene(
+              a,
+              text,
+              svg.name.replace(/\.svg$/i, ""),
+              useUi.getState().svgMode,
+              at,
+            ),
+          )
+          .catch((err) =>
+            useToasts
+              .getState()
+              .push({ message: err instanceof Error ? err.message : "Could not import that SVG" }),
+          );
+      }}
+    >
       <Excalidraw
-        key={`${active.scene.id}:${active.nonce}`}
+        key={`${active.scene.id}:${active.page.id}:${active.nonce}`}
         name={active.scene.title}
         theme={resolveTheme(pref)}
         handleKeyboardGlobally
@@ -247,6 +312,28 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
         }}
         renderTopRightUI={() => <WorkspaceTopRight />}
         onChange={(elements, appState, files) => {
+          // Cheap: only re-derive the selected smart component when the selection actually changed.
+          const selKey = Object.keys(appState.selectedElementIds).join(",");
+          if (selKey !== ctl.selKey) {
+            ctl.selKey = selKey;
+            const m = selKey ? instanceOfSelection(elements, appState.selectedElementIds) : null;
+            useSmart.getState().setSelected(m ? { instance: m.instance, id: m.id } : null);
+            useSmart.getState().bump(); // selection changed: the inspector re-reads it (e.g. port connect)
+          }
+          // The selected smart component changed (undo/redo, import, edits): refresh its inspector.
+          const sel = useSmart.getState().selected;
+          if (sel) {
+            let sig = 0;
+            for (const e of elements) {
+              const m = (e.customData as { smartComponent?: { instance?: string } } | undefined)
+                ?.smartComponent;
+              if (m?.instance === sel.instance) sig += e.version + (e.isDeleted ? 1000003 : 0);
+            }
+            if (sig !== ctl.smartSig) {
+              ctl.smartSig = sig;
+              useSmart.getState().bump();
+            }
+          }
           ctl.latest = { e: elements, s: appState, f: files as never };
           if (!ctl.session.markChanged(signature(elements, appState))) return;
           scheduleSave(elements, appState as unknown as AppStateLike, files as never);

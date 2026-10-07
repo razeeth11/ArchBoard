@@ -14,6 +14,7 @@ const PATHS = [
   "/changelog",
   "/vs",
   "/guides/system-design-diagram",
+  "/guides/diagram-dsl",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

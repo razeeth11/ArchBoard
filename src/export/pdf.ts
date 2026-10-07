@@ -1,6 +1,77 @@
 import { step, throwIfAborted, type Hooks } from "./abort";
 import { bindTextToFaces, extractEmbeddedFonts, loadFaces } from "./fonts";
+import { sanitizeSvg } from "@/library/svg";
 import { pdfPageLayout, type PdfOptions } from "./options";
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const XLINK_NS = "http://www.w3.org/1999/xlink";
+
+function decodeDataUrl(href: string): { mime: string; text: string } | null {
+  const m = /^data:([^;,]+);base64,(.*)$/s.exec(href.trim());
+  if (!m) return null;
+  try {
+    const bin = atob(m[2]!);
+    return {
+      mime: m[1]!,
+      text: new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Excalidraw embeds images as `<symbol><image href=data:…></symbol>` + `<use>`. svg2pdf mis-sizes
+ * that structure for SVG images, so inline each SVG image as a nested <svg> (true vector in the PDF).
+ * The embedded SVG comes from the scene file, which is untrusted, so it is sanitized again here.
+ */
+export function inlineSvgImages(svg: SVGSVGElement) {
+  const doc = svg.ownerDocument;
+  const symbols = new Map<string, Element>();
+  svg.querySelectorAll("symbol[id]").forEach((s) => symbols.set(s.id, s));
+  const cache = new Map<string, Element | null>();
+
+  for (const use of Array.from(svg.querySelectorAll("use"))) {
+    const href = use.getAttribute("href") ?? use.getAttributeNS(XLINK_NS, "href") ?? "";
+    const symbol = href.startsWith("#") ? symbols.get(href.slice(1)) : undefined;
+    const image = symbol?.querySelector("image");
+    const src = image?.getAttribute("href") ?? image?.getAttributeNS(XLINK_NS, "href");
+    if (!symbol || !src) continue;
+
+    let content = cache.get(src);
+    if (content === undefined) {
+      const data = decodeDataUrl(src);
+      content = null;
+      if (data?.mime === "image/svg+xml") {
+        try {
+          content = doc.importNode(
+            new DOMParser().parseFromString(sanitizeSvg(data.text), "image/svg+xml")
+              .documentElement,
+            true,
+          );
+        } catch {
+          content = null; // unsafe or unparsable: drop the image rather than risk it
+        }
+      }
+      cache.set(src, content);
+    }
+    if (!content) continue;
+
+    const g = doc.createElementNS(SVG_NS, "g");
+    for (const a of Array.from(use.attributes)) {
+      if (!["href", "width", "height", "x", "y"].includes(a.name) && a.name !== "xlink:href")
+        g.setAttribute(a.name, a.value);
+    }
+    const nested = content.cloneNode(true) as Element;
+    nested.setAttribute("x", use.getAttribute("x") ?? "0");
+    nested.setAttribute("y", use.getAttribute("y") ?? "0");
+    nested.setAttribute("width", use.getAttribute("width") ?? "100");
+    nested.setAttribute("height", use.getAttribute("height") ?? "100");
+    nested.setAttribute("preserveAspectRatio", "none");
+    g.appendChild(nested);
+    use.replaceWith(g);
+  }
+}
 
 export interface PdfSheet {
   svg: SVGSVGElement;
@@ -43,6 +114,7 @@ export async function buildPdf(
         0.15 + (0.8 * i) / sheets.length,
       );
       const svg = sheet.svg;
+      inlineSvgImages(svg);
       const w = toNum(svg.getAttribute("width"));
       const h = toNum(svg.getAttribute("height"));
       const layout = pdfPageLayout(w, h, pdfOpts);

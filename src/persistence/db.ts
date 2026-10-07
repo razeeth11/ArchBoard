@@ -9,6 +9,7 @@ import type {
   Scene,
   Setting,
   Snapshot,
+  SmartDefRecord,
 } from "./types";
 
 export class ArchBoardDB extends Dexie {
@@ -21,6 +22,8 @@ export class ArchBoardDB extends Dexie {
   blobs!: EntityTable<BlobRecord, "hash">;
   comments!: EntityTable<Comment, "id">;
   recovery!: EntityTable<RecoveryRecord, "id">;
+  /** User-authored Smart Component definitions (JSON). Added in schema v2. */
+  smartDefs!: EntityTable<SmartDefRecord, "id">;
 
   constructor(name = "archboard") {
     super(name);
@@ -36,6 +39,8 @@ export class ArchBoardDB extends Dexie {
       comments: "id, sceneId",
       recovery: "id, sceneId",
     });
+    // v2: adds `smartDefs`. Existing tables are untouched, so no data migration is needed.
+    this.version(2).stores({ smartDefs: "id, updatedAt" });
   }
 }
 

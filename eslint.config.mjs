@@ -4,7 +4,15 @@ import nextTs from "eslint-config-next/typescript";
 const config = [
   ...nextVitals,
   ...nextTs,
-  { ignores: ["out/**", ".next/**", "public/excalidraw-assets/**", "next-env.d.ts"] },
+  {
+    ignores: [
+      "out/**",
+      ".next/**",
+      "manual-test/**",
+      "public/excalidraw-assets/**",
+      "next-env.d.ts",
+    ],
+  },
   { rules: { "@typescript-eslint/no-explicit-any": "error" } },
 ];
 

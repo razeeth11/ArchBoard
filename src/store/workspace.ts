@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { onTabMessage, postTab } from "@/persistence/channel";
 import * as repo from "@/persistence/repo";
+import * as pageOps from "@/persistence/pages";
+import { listPages } from "@/persistence/pages";
 import { buildBackup, importAny, importEmbeddedImage } from "@/persistence/backup";
 import { getEditorApi } from "@/engine/apiRef";
 import type { SaveStatus } from "@/persistence/autosave";
@@ -10,6 +12,8 @@ import { useToasts } from "./toasts";
 export interface ActiveScene {
   scene: Scene;
   page: Page;
+  /** Every page of the scene, in order (titles only are needed by the tabs). */
+  pages: { id: string; title: string }[];
   files: repo.LoadedFile[];
   /** Changes whenever the canvas must be remounted from storage. */
   nonce: number;
@@ -51,7 +55,14 @@ interface WorkspaceState {
   refresh: () => Promise<void>;
   openScene: (id: string) => Promise<void>;
   reloadActive: () => Promise<void>;
+  flushSaves: () => Promise<void>;
   newScene: () => Promise<void>;
+  openPage: (pageId: string) => Promise<void>;
+  addPage: () => Promise<void>;
+  renamePage: (pageId: string, title: string) => Promise<void>;
+  deletePage: (pageId: string) => Promise<void>;
+  movePage: (pageId: string, delta: -1 | 1) => Promise<void>;
+  duplicatePage: (pageId: string) => Promise<void>;
   setPanelOpen: (v: boolean) => void;
   setFolderFilter: (f: string) => void;
   setSearch: (s: string) => void;
@@ -79,13 +90,16 @@ function setUrlScene(id: string) {
 }
 
 export const useWorkspace = create<WorkspaceState>((set, get) => {
-  async function load(id: string, nonce: number): Promise<ActiveScene | null> {
+  async function load(id: string, nonce: number, pageId?: string): Promise<ActiveScene | null> {
     const scene = await repo.getScene(id);
     if (!scene || scene.deletedAt !== null) return null;
     try {
-      const page = await repo.loadPage(id);
+      const remembered = pageId ?? (await repo.getSetting<string | null>(`lastPage:${id}`, null));
+      const wanted = remembered && scene.pageIds.includes(remembered) ? remembered : undefined;
+      const page = await repo.loadPage(id, wanted);
       const files = await repo.loadFiles(page.fileRefs);
-      return { scene, page, files, nonce };
+      const pages = (await listPages(id)).map((p) => ({ id: p.id, title: p.title }));
+      return { scene, page, pages, files, nonce };
     } catch (e) {
       if (e instanceof CorruptSceneError) {
         set({ corrupt: { sceneId: id, reason: e.reason, raw: e.raw }, active: null });
@@ -175,11 +189,91 @@ export const useWorkspace = create<WorkspaceState>((set, get) => {
       await repo.setSetting(LAST_SCENE_KEY, id);
     },
 
+    async openPage(pageId) {
+      const a = get().active;
+      if (!a || a.page.id === pageId) return;
+      await controller?.flush();
+      const next = await load(a.scene.id, a.nonce + 1, pageId);
+      if (!next) return;
+      set({ active: next, conflict: null, saveStatus: "idle" });
+      await repo.setSetting(`lastPage:${a.scene.id}`, pageId);
+    },
+
+    async addPage() {
+      const a = get().active;
+      if (!a) return;
+      await controller?.flush();
+      const p = await pageOps.addPage(a.scene.id, undefined, a.page.id);
+      postTab({ kind: "workspace-changed" });
+      const next = await load(a.scene.id, a.nonce + 1, p.id);
+      if (next) set({ active: next, conflict: null, saveStatus: "idle" });
+      await repo.setSetting(`lastPage:${a.scene.id}`, p.id);
+    },
+
+    async renamePage(pageId, title) {
+      const a = get().active;
+      if (!a) return;
+      await pageOps.renamePage(pageId, title);
+      set({
+        active: {
+          ...a,
+          pages: a.pages.map((p) =>
+            p.id === pageId ? { ...p, title: title.trim() || "Untitled page" } : p,
+          ),
+        },
+      });
+    },
+
+    async deletePage(pageId) {
+      const a = get().active;
+      if (!a) return;
+      await controller?.flush();
+      try {
+        await pageOps.deletePage(a.scene.id, pageId);
+      } catch (e) {
+        useToasts.getState().push({ message: (e as Error).message });
+        return;
+      }
+      const left = a.pages.filter((p) => p.id !== pageId);
+      const target =
+        a.page.id === pageId
+          ? (left[
+              Math.min(
+                a.pages.findIndex((p) => p.id === pageId),
+                left.length - 1,
+              )
+            ]?.id ?? left[0]!.id)
+          : a.page.id;
+      const next = await load(a.scene.id, a.nonce + 1, target);
+      if (next) set({ active: next, conflict: null });
+    },
+
+    async movePage(pageId, delta) {
+      const a = get().active;
+      if (!a) return;
+      await pageOps.movePage(a.scene.id, pageId, delta);
+      const pages = (await listPages(a.scene.id)).map((p) => ({ id: p.id, title: p.title }));
+      set({ active: { ...a, pages } });
+    },
+
+    async duplicatePage(pageId) {
+      const a = get().active;
+      if (!a) return;
+      await controller?.flush();
+      const p = await pageOps.duplicatePage(a.scene.id, pageId);
+      const next = await load(a.scene.id, a.nonce + 1, p.id);
+      if (next) set({ active: next, conflict: null });
+    },
+
+    async flushSaves() {
+      await controller?.flush();
+    },
+
     async reloadActive() {
       const a = get().active;
       if (!a) return;
       controller?.discard();
-      const next = await load(a.scene.id, a.nonce + 1);
+      const next = await load(a.scene.id, a.nonce + 1, a.page.id);
       if (next) set({ active: next, conflict: null, saveStatus: "idle" });
     },
 

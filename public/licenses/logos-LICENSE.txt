@@ -1,0 +1,13 @@
+SVG Logos — Gil Barbara
+Upstream: https://github.com/gilbarbara/logos
+License source: https://raw.githubusercontent.com/gilbarbara/logos/master/LICENSE.txt
+SPDX: CC0-1.0
+Redistributed in ArchBoard as a curated subset of icons; see https://iconify.design for the data packaging.
+
+CC0 1.0 Universal (Public Domain Dedication)
+
+To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this work to the public domain worldwide. This work is distributed without any warranty.
+
+You should have received a copy of the CC0 legal code along with this work. If not, see https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+Note: CC0 covers the artwork's copyright only. Logos and brand marks remain trademarks of their owners.

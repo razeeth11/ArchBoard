@@ -357,3 +357,19 @@ export async function loadLibraryItems(): Promise<unknown[]> {
 export async function saveLibraryItems(items: unknown[]) {
   await getDb().libraries.put({ id: "default", name: "My library", items, updatedAt: Date.now() });
 }
+
+// ───────────────────────── smart component definitions ─────────────────────────
+
+export async function listSmartDefs(): Promise<
+  { id: string; name: string; def: unknown; updatedAt: number }[]
+> {
+  return getDb().smartDefs.orderBy("updatedAt").reverse().toArray();
+}
+
+export async function saveSmartDef(id: string, name: string, def: unknown) {
+  await getDb().smartDefs.put({ id, name, def, updatedAt: Date.now() });
+}
+
+export async function deleteSmartDef(id: string) {
+  await getDb().smartDefs.delete(id);
+}

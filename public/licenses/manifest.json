@@ -1,0 +1,101 @@
+{
+  "generatedBy": "scripts/build-icons.mjs",
+  "sets": [
+    {
+      "prefix": "logos",
+      "name": "SVG Logos",
+      "author": "Gil Barbara",
+      "authorUrl": "https://github.com/gilbarbara/logos",
+      "license": {
+        "spdx": "CC0-1.0",
+        "title": "CC0",
+        "url": "https://raw.githubusercontent.com/gilbarbara/logos/master/LICENSE.txt"
+      },
+      "licenseFile": "/licenses/logos-LICENSE.txt",
+      "version": "1.2.15",
+      "iconCount": 79,
+      "note": "Technology and cloud-service logos. Trademarks belong to their respective owners; used for identification only.",
+      "attribution": "SVG Logos by Gil Barbara (CC0)"
+    },
+    {
+      "prefix": "devicon",
+      "name": "Devicon",
+      "author": "konpa",
+      "authorUrl": "https://github.com/devicons/devicon/tree/master",
+      "license": {
+        "spdx": "MIT",
+        "title": "MIT",
+        "url": "https://github.com/devicons/devicon/blob/master/LICENSE"
+      },
+      "licenseFile": "/licenses/devicon-LICENSE.txt",
+      "version": "1.2.68",
+      "iconCount": 28,
+      "note": "Developer technology icons.",
+      "attribution": "Devicon by konpa (MIT)"
+    },
+    {
+      "prefix": "simple-icons",
+      "name": "Simple Icons",
+      "author": "Simple Icons Collaborators",
+      "authorUrl": "https://github.com/simple-icons/simple-icons",
+      "license": {
+        "spdx": "CC0-1.0",
+        "title": "CC0 1.0",
+        "url": "https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md"
+      },
+      "licenseFile": "/licenses/simple-icons-LICENSE.txt",
+      "version": "1.2.99",
+      "iconCount": 26,
+      "note": "Monochrome brand glyphs. Trademarks belong to their respective owners; see https://simpleicons.org/ guidelines.",
+      "attribution": "Simple Icons by Simple Icons Collaborators (CC0 1.0)"
+    },
+    {
+      "prefix": "mdi",
+      "name": "Material Design Icons",
+      "author": "Pictogrammers",
+      "authorUrl": "https://github.com/Templarian/MaterialDesign",
+      "license": {
+        "spdx": "Apache-2.0",
+        "title": "Apache 2.0",
+        "url": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE"
+      },
+      "licenseFile": "/licenses/mdi-LICENSE.txt",
+      "version": "1.2.3",
+      "iconCount": 128,
+      "note": "Generic infrastructure and UI glyphs.",
+      "attribution": "Material Design Icons by Pictogrammers (Apache 2.0)"
+    },
+    {
+      "prefix": "carbon",
+      "name": "Carbon",
+      "author": "IBM",
+      "authorUrl": "https://github.com/carbon-design-system/carbon/tree/main/packages/icons",
+      "license": {
+        "spdx": "Apache-2.0",
+        "title": "Apache 2.0",
+        "url": ""
+      },
+      "licenseFile": "/licenses/carbon-LICENSE.txt",
+      "version": "1.2.28",
+      "iconCount": 76,
+      "note": "IBM Carbon pictograms for cloud and data architecture.",
+      "attribution": "Carbon by IBM (Apache 2.0)"
+    },
+    {
+      "prefix": "lucide",
+      "name": "Lucide",
+      "author": "Lucide Contributors",
+      "authorUrl": "https://github.com/lucide-icons/lucide",
+      "license": {
+        "spdx": "ISC",
+        "title": "ISC",
+        "url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE"
+      },
+      "licenseFile": "/licenses/lucide-LICENSE.txt",
+      "version": "1.2.140",
+      "iconCount": 94,
+      "note": "General-purpose UI and concept icons.",
+      "attribution": "Lucide by Lucide Contributors (ISC)"
+    }
+  ]
+}
