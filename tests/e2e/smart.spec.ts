@@ -687,3 +687,24 @@ for (const id of [
     expect(buf).toMatchSnapshot(`smart-${id}.png`, { maxDiffPixelRatio: 0.003 });
   });
 }
+
+test("components panel tabs never overflow horizontally", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const p = panel(page);
+  for (const name of [/^Smart/, /^Blocks/, /^Tech/, /^Kits/, /^Icons/, /^SVG/]) {
+    await p.getByRole("tab", { name }).click();
+    const m = await p.evaluate((el) => {
+      const area = el.querySelector<HTMLElement>(".overflow-y-auto");
+      const box = el.getBoundingClientRect();
+      const out = Array.from(el.querySelectorAll<HTMLElement>("[data-testid$='-item']")).filter(
+        (c) => {
+          const r = c.getBoundingClientRect();
+          return r.left < box.left - 0.5 || r.right > box.right + 0.5;
+        },
+      ).length;
+      return { sw: area?.scrollWidth ?? 0, cw: area?.clientWidth ?? 0, out };
+    });
+    expect(m.sw, `${name}`).toBe(m.cw);
+    expect(m.out, `${name} cards outside panel`).toBe(0);
+  }
+});

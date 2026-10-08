@@ -35,7 +35,7 @@ function Row({ def, custom }: { def: SmartDef; custom?: boolean }) {
   const setDialog = useUi((s) => s.setSmartDialog);
   const remove = useSmart((s) => s.removeDef);
   return (
-    <div className="border-border flex items-center gap-1 rounded-lg border">
+    <div className="border-border flex min-w-0 items-center gap-1 rounded-lg border">
       <button
         type="button"
         draggable
@@ -52,9 +52,9 @@ function Row({ def, custom }: { def: SmartDef; custom?: boolean }) {
         <span className="bg-accent/10 text-accent flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
           <Wand2 size={18} aria-hidden />
         </span>
-        <span className="min-w-0">
+        <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">{def.name}</span>
-          <span className="text-muted block truncate text-xs">{def.description}</span>
+          <span className="text-muted line-clamp-2 block text-xs">{def.description}</span>
         </span>
       </button>
       {custom && (
@@ -118,7 +118,7 @@ export function SmartTab({ q }: { q: string }) {
         Parametric components: select one on the canvas to change its properties and the diagram
         redraws in place. Your colour and label edits are kept.
       </p>
-      <div className="grid grid-cols-1 gap-1.5">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
         <button
           type="button"
           className="border-border flex items-center gap-2 rounded-lg border border-dashed p-2 text-sm"
@@ -171,7 +171,7 @@ export function SmartTab({ q }: { q: string }) {
           <h3 className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
             Your components
           </h3>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
             {customList.map((d) => (
               <Row key={d.id} def={d} custom />
             ))}
@@ -181,7 +181,7 @@ export function SmartTab({ q }: { q: string }) {
       {cats.map((c) => (
         <section key={c}>
           <h3 className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">{c}</h3>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
             {builtins
               .filter((d) => d.category === c)
               .map((d) => (

@@ -63,12 +63,12 @@ function Card({
       onClick={() => void insertPayload(payload)}
       title={sub ? `${title} — ${sub}` : title}
       data-testid="library-item"
-      className="border-border hover:bg-surface flex w-full items-center gap-2 rounded-lg border p-2 text-left"
+      className="border-border hover:bg-surface flex w-full min-w-0 items-center gap-2 rounded-lg border p-2 text-left"
     >
       {preview}
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{title}</span>
-        {sub && <span className="text-muted block truncate text-xs">{sub}</span>}
+        {sub && <span className="text-muted line-clamp-2 block text-xs">{sub}</span>}
       </span>
     </button>
   );
@@ -78,7 +78,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   return (
     <section className="mb-4">
       <h3 className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">{title}</h3>
-      <div className="grid grid-cols-1 gap-1.5">{children}</div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">{children}</div>
     </section>
   );
 }
@@ -174,7 +174,7 @@ function ShapesTab({ q }: { q: string }) {
         ))}
       </div>
       {items.length === 0 && <p className="text-muted text-sm">No shapes match “{q}”.</p>}
-      <div className="grid grid-cols-1 gap-1.5">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
         {items.map((i) => (
           <Card
             key={i.id}
@@ -270,7 +270,7 @@ function IconsTab({ q }: { q: string }) {
       )}
       {local.length > 0 && (
         <Group title={`Bundled (${local.length})`}>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-6 gap-1.5">
             {local.map((h) => (
               <IconCell
                 key={h.ref}
@@ -284,7 +284,7 @@ function IconsTab({ q }: { q: string }) {
       )}
       {remote.length > 0 && (
         <Group title={`Online (${remote.length})`}>
-          <div className="grid grid-cols-4 gap-1.5" data-testid="online-results">
+          <div className="grid grid-cols-6 gap-1.5" data-testid="online-results">
             {remote.map((r) => (
               <IconCell
                 key={r.ref}
@@ -455,7 +455,7 @@ export function ComponentsPanel() {
     <aside
       id="components-panel"
       aria-label="Components"
-      className="bg-bg text-fg border-border fixed top-14 right-0 bottom-0 z-30 flex w-80 max-w-[90vw] flex-col border-l shadow-xl"
+      className="bg-bg text-fg border-border fixed top-14 right-0 bottom-0 z-30 flex w-[34rem] max-w-[95vw] flex-col border-l shadow-xl"
     >
       <div className="border-border flex items-center justify-between border-b p-3">
         <h2 className="text-sm font-semibold">Components</h2>
@@ -484,7 +484,7 @@ export function ComponentsPanel() {
         </div>
         <Tabs.List
           aria-label="Library sections"
-          className="border-border mt-2 flex flex-wrap gap-x-1 border-b px-2"
+          className="border-border mt-2 flex flex-wrap gap-x-1 border-b px-3"
         >
           <Tabs.Trigger value="smart" className={TAB}>
             Smart
@@ -505,7 +505,7 @@ export function ComponentsPanel() {
             SVG
           </Tabs.Trigger>
         </Tabs.List>
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3">
           <Tabs.Content value="smart">
             <SmartTab q={q} />
           </Tabs.Content>
