@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 export default function Route() {
   return (
     <Page title="System design templates" wide>
-      <p className="text-muted max-w-3xl">
+      <p className="text-muted">
         Every template is a real, editable diagram with a short explanation of the design, its
         trade-offs and where it breaks. Open one and ArchBoard builds it as a new scene on your
         device. Nothing is uploaded and there is no account.

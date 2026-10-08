@@ -87,21 +87,8 @@ test("corrupt scene opens a recovery dialog, keeps raw data, and offers another 
   await expect(page.locator(".excalidraw canvas.interactive")).toBeVisible();
 });
 
-test("backup downloads valid JSON and import restores it as new scenes", async ({ page }) => {
+test("scenes panel has no backup download button", async ({ page }) => {
   await openEditor(page);
-  await drawRect(page);
-  await waitSaved(page);
   await page.getByRole("button", { name: "Scenes", exact: true }).click();
-  const [dl] = await Promise.all([
-    page.waitForEvent("download"),
-    page.getByRole("button", { name: "Backup", exact: true }).click(),
-  ]);
-  const path = await dl.path();
-  const fs = await import("node:fs/promises");
-  const data = JSON.parse(await fs.readFile(path, "utf8"));
-  expect(data.type).toBe("archboard-backup");
-  expect(data.scenes.length).toBeGreaterThanOrEqual(1);
-
-  await page.getByTestId("import-input").setInputFiles(path);
-  await expect(page.getByTestId("scene-row")).toHaveCount(data.scenes.length * 2);
+  await expect(page.getByRole("button", { name: "Backup", exact: true })).toHaveCount(0);
 });

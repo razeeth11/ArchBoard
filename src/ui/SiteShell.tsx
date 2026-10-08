@@ -6,7 +6,7 @@ export function SiteHeader() {
     <header className="border-border border-b">
       <nav
         aria-label="Primary"
-        className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"
+        className="mx-auto flex w-[80%] items-center justify-between gap-4 py-3"
       >
         <Link href="/" className="text-lg font-semibold">
           {SITE.name}
@@ -36,7 +36,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="border-border text-muted border-t py-6 text-sm">
-      <div className="mx-auto flex max-w-5xl flex-wrap gap-4 px-4">
+      <div className="mx-auto flex w-[80%] flex-wrap gap-4">
         <Link href="/privacy">Privacy</Link>
         <Link href="/credits">Credits</Link>
         <Link href="/changelog">Changelog</Link>
@@ -49,7 +49,6 @@ export function SiteFooter() {
 export function Page({
   title,
   children,
-  wide,
 }: {
   title: string;
   children: React.ReactNode;
@@ -58,7 +57,7 @@ export function Page({
   return (
     <>
       <SiteHeader />
-      <main className={`mx-auto px-4 py-10 ${wide ? "max-w-5xl" : "max-w-3xl"}`}>
+      <main className="mx-auto w-[80%] py-10">
         <h1 className="mb-4 text-3xl font-bold">{title}</h1>
         {children}
       </main>

@@ -13,7 +13,7 @@ export default function AppPage() {
   return (
     <>
       <noscript>
-        <main className="mx-auto max-w-2xl p-6">
+        <main className="mx-auto w-[80%] py-6">
           <h1>ArchBoard editor</h1>
           <p>
             ArchBoard is a browser-based whiteboard for architecture diagrams. It needs JavaScript

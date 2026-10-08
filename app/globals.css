@@ -62,3 +62,29 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Hide Excalidraw's built-in Library sidebar button. */
+.excalidraw .sidebar-trigger,
+.excalidraw .default-sidebar-trigger {
+  display: none !important;
+}
+
+/* Minimal dotted canvas pattern; size/offset follow zoom and scroll via CSS vars. */
+.canvas-dots {
+  --dot-color: rgb(0 0 0 / 0.14);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1.5px);
+  background-size: var(--dot-size, 24px) var(--dot-size, 24px);
+  background-position: var(--dot-x, 0) var(--dot-y, 0);
+}
+:root[data-theme="dark"] .canvas-dots {
+  --dot-color: rgb(255 255 255 / 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .canvas-dots {
+    --dot-color: rgb(255 255 255 / 0.16);
+  }
+}

@@ -17,7 +17,7 @@ export default function Route() {
   const groups = [...new Set(TECH.map((t) => t.group))];
   return (
     <Page title="Component library" wide>
-      <p className="text-muted max-w-3xl">
+      <p className="text-muted">
         Everything in the Components panel of the editor. Drag or click to place it on the canvas.
         Smart components are parametric: change a property such as the replica count and the diagram
         regenerates in place, keeping your own edits.

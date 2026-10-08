@@ -2,7 +2,6 @@
 
 import {
   Copy,
-  Download,
   Folder as FolderIcon,
   FolderPlus,
   MoreHorizontal,
@@ -394,13 +393,6 @@ export function WorkspacePanel() {
       </div>
 
       <div className="border-border flex gap-2 border-t p-3 text-xs">
-        <button
-          type="button"
-          className="border-border flex items-center gap-1 rounded-md border px-2 py-1"
-          onClick={() => void ws.downloadBackup()}
-        >
-          <Download size={12} aria-hidden /> Backup
-        </button>
         <button
           type="button"
           className="border-border flex items-center gap-1 rounded-md border px-2 py-1"

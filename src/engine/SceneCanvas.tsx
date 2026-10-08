@@ -13,7 +13,7 @@ import type {
   ExcalidrawInitialDataState,
 } from "@excalidraw/excalidraw/types";
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Autosaver } from "@/persistence/autosave";
 import { SnapshotScheduler, takeSnapshot } from "@/persistence/history";
 import { postTab } from "@/persistence/channel";
@@ -86,6 +86,7 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
   const setSaveStatus = useWorkspace((s) => s.setSaveStatus);
   const setConflict = useWorkspace((s) => s.setConflict);
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  const dotsRef = useRef<HTMLDivElement>(null);
   const initialData = useMemo(() => toInitialData(active), [active]);
 
   const ctl = useMemo(() => {
@@ -238,7 +239,7 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
 
   return (
     <div
-      className="h-dvh w-full"
+      className="relative h-dvh w-full"
       data-testid="editor-root"
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes(DRAG_MIME)) {
@@ -285,6 +286,7 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
           );
       }}
     >
+      <div ref={dotsRef} className="canvas-dots" aria-hidden />
       <Excalidraw
         key={`${active.scene.id}:${active.page.id}:${active.nonce}`}
         name={active.scene.title}
@@ -333,6 +335,13 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
               ctl.smartSig = sig;
               useSmart.getState().bump();
             }
+          }
+          const dots = dotsRef.current;
+          if (dots) {
+            const size = 24 * appState.zoom.value;
+            dots.style.setProperty("--dot-size", `${size}px`);
+            dots.style.setProperty("--dot-x", `${appState.scrollX * appState.zoom.value}px`);
+            dots.style.setProperty("--dot-y", `${appState.scrollY * appState.zoom.value}px`);
           }
           ctl.latest = { e: elements, s: appState, f: files as never };
           if (!ctl.session.markChanged(signature(elements, appState))) return;

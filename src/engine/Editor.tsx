@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { resolveTheme, usePrefs } from "@/store/prefs";
 import { useWorkspace } from "@/store/workspace";
 import { SceneCanvas } from "./SceneCanvas";
-import { BackupReminder } from "@/ui/workspace/BackupReminder";
 import { ConflictDialog, RecoveryDialog } from "@/ui/workspace/dialogs";
 import { EditorErrorBoundary } from "@/ui/workspace/ErrorBoundary";
 import { ExportDialog } from "@/ui/export/ExportDialog";
@@ -130,7 +129,6 @@ function Workspace() {
       <ExportDialog />
       <ConflictDialog />
       <RecoveryDialog />
-      <BackupReminder />
       <ToastHost />
     </>
   );

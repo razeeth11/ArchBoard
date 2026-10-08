@@ -44,7 +44,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
   return (
     <Page title={`${t.title} diagram template`} wide>
       <Breadcrumbs trail={trail} />
-      <p className="text-muted max-w-3xl text-lg">{t.summary}</p>
+      <p className="text-muted text-lg">{t.summary}</p>
       <div className="mt-6 grid gap-8 lg:grid-cols-[3fr_2fr]">
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}

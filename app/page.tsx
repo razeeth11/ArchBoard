@@ -18,11 +18,11 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-16">
-        <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
+      <main className="mx-auto w-[80%] py-16">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Whiteboard for system design and architecture
         </h1>
-        <p className="text-muted mt-4 max-w-2xl text-lg">
+        <p className="text-muted mt-4 text-lg">
           A free, hand-drawn style canvas with reusable architecture components. Everything is
           stored on your device: no account, no server, works offline.
         </p>

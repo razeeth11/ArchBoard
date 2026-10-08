@@ -195,7 +195,7 @@ export function SmartInspector() {
       <aside
         aria-label="Smart component properties"
         data-testid="smart-inspector"
-        className={`bg-bg text-fg border-border fixed bottom-16 z-20 w-72 rounded-xl border p-3 shadow-xl ${componentsOpen ? "right-[21rem]" : "right-3"}`}
+        className={`bg-bg text-fg border-border fixed bottom-16 z-20 w-[26rem] max-w-[90vw] rounded-xl border p-3 shadow-xl ${componentsOpen ? "right-[35rem]" : "right-3"}`}
       >
         <h2 className="text-sm font-semibold">Smart component</h2>
         <p className="text-muted mt-1 text-xs">
@@ -229,7 +229,7 @@ export function SmartInspector() {
     <aside
       aria-label="Smart component properties"
       data-testid="smart-inspector"
-      className={`bg-bg text-fg border-border fixed bottom-16 z-20 flex max-h-[70dvh] w-72 flex-col rounded-xl border shadow-xl ${componentsOpen ? "right-[21rem]" : "right-3"}`}
+      className={`bg-bg text-fg border-border fixed bottom-16 z-20 flex max-h-[70dvh] w-[26rem] max-w-[90vw] flex-col rounded-xl border shadow-xl ${componentsOpen ? "right-[35rem]" : "right-3"}`}
     >
       <div className="border-border flex items-center gap-2 border-b p-3">
         <Wand2 size={16} className="text-accent" aria-hidden />

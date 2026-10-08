@@ -74,12 +74,6 @@ function useCommands(): Cmd[] {
         run: () => void useWorkspace.getState().addPage(),
       },
       {
-        id: "backup",
-        group: "Command",
-        label: "Download backup",
-        run: () => void useWorkspace.getState().downloadBackup(),
-      },
-      {
         id: "theme",
         group: "Command",
         label: "Cycle theme",
