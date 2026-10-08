@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAV, SITE } from "@/lib/site";
+import { CREATOR, NAV, SITE } from "@/lib/site";
 
 export function SiteHeader() {
   return (
@@ -41,6 +41,19 @@ export function SiteFooter() {
         <Link href="/credits">Credits</Link>
         <Link href="/changelog">Changelog</Link>
         <span>MIT licensed. Your data stays on your device.</span>
+        <a
+          href={CREATOR.url}
+          rel="me noopener"
+          data-testid="creator-credit"
+          className="hover:text-fg underline"
+        >
+          {`Built by ${CREATOR.name}`}
+        </a>
+        {CREATOR.storeUrl && (
+          <a href={CREATOR.storeUrl} rel="noopener" className="hover:text-fg underline">
+            Microsoft Store
+          </a>
+        )}
       </div>
     </footer>
   );

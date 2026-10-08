@@ -71,3 +71,32 @@ test("whiteboard has a Home button and every visible button has a tooltip", asyn
   await page.getByRole("link", { name: "Home" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
+
+for (const path of ["/", "/about", "/templates/url-shortener"]) {
+  test(`creator credit renders on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const credit = page.getByTestId("creator-credit");
+    await expect(credit).toHaveText("Built by codebyrazeeth");
+    await expect(credit).toHaveAttribute("href", "https://github.com/razeeth11");
+    await expect(credit).toHaveAttribute("rel", "me noopener");
+    await expect(page.getByRole("link", { name: /Microsoft Store/ })).toHaveCount(0);
+  });
+}
+
+test("About page lists the creator, the repository and the independence note", async ({ page }) => {
+  await page.goto("/about");
+  await expect(page.getByRole("heading", { name: "About the creator" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ArchBoard source code" })).toHaveAttribute(
+    "href",
+    "https://github.com/razeeth11/ArchBoard",
+  );
+  await expect(page.getByText(/not affiliated with or endorsed by Excalidraw/)).toBeVisible();
+});
+
+for (const path of ["/", "/about"]) {
+  test(`axe reports no violations on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const res = await new AxeBuilder({ page }).analyze();
+    expect(res.violations).toEqual([]);
+  });
+}

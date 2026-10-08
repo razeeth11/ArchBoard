@@ -4,7 +4,8 @@ import { JsonLd } from "@/ui/JsonLd";
 import { TemplateCard } from "@/ui/TemplateCard";
 import { GUIDES } from "@/content/guides";
 import { TEMPLATES } from "@/content/templates";
-import { webApplication } from "@/lib/jsonld";
+import { CREATOR } from "@/lib/site";
+import { creator, webApplication } from "@/lib/jsonld";
 import { pageMetadata } from "@/lib/metadata";
 
 export const metadata = pageMetadata({
@@ -81,9 +82,33 @@ export default function Home() {
             ))}
           </ul>
         </section>
+        <section className="mt-16">
+          <h2 className="text-2xl font-semibold">Made by {CREATOR.name}</h2>
+          <p className="text-muted mt-2">
+            ArchBoard is an independent project by {CREATOR.name}. The source is on{" "}
+            <a href={CREATOR.url} rel="me noopener" className="underline">
+              GitHub
+            </a>
+            , and the{" "}
+            <Link href="/about" className="underline">
+              about page
+            </Link>{" "}
+            covers how it works.
+            {CREATOR.storeUrl && (
+              <>
+                {" "}
+                It is also available in the{" "}
+                <a href={CREATOR.storeUrl} rel="noopener" className="underline">
+                  Microsoft Store
+                </a>
+                .
+              </>
+            )}
+          </p>
+        </section>
       </main>
       <SiteFooter />
-      <JsonLd data={webApplication()} />
+      <JsonLd data={[webApplication(), creator()]} />
     </>
   );
 }

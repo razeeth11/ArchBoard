@@ -4,7 +4,11 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const OUT = "out";
-const SITE = "https://archboard.app";
+const SITE = "https://archboard.space";
+const CREATOR_NAME = "codebyrazeeth";
+const CREATOR_ID = `${SITE}/#creator`;
+// The editor shell is not a content page and has no site footer.
+const NO_FOOTER = new Set(["/app"]);
 const problems = [];
 const fail = (page, msg) => problems.push(`${page}: ${msg}`);
 
@@ -76,6 +80,13 @@ for (const f of pages) {
   const h1 = (html.match(/<h1[\s>]/g) ?? []).length;
   if (h1 !== 1) fail(route, `expected one <h1>, found ${h1}`);
 
+  if (
+    !NO_FOOTER.has(route) &&
+    !/<a [^>]*data-testid="creator-credit"[^>]*>\s*Built by codebyrazeeth\s*<\/a>/.test(html)
+  )
+    fail(route, 'missing "Built by codebyrazeeth" credit');
+  let hasPerson = false;
+
   for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     let data;
     try {
@@ -93,14 +104,31 @@ for (const f of pages) {
           if (it.position !== i + 1 || !it.name || !/^https:\/\//.test(it.item))
             fail(route, "bad breadcrumb item");
         });
-      if (["Article", "TechArticle"].includes(node["@type"]))
+      if (node["@type"] === "Person") {
+        hasPerson = true;
+        if (node.name !== CREATOR_NAME) fail(route, `Person name is "${node.name}"`);
+        if (node["@id"] !== CREATOR_ID) fail(route, `Person @id is "${node["@id"]}"`);
+        for (const u of node.sameAs ?? [])
+          if (!/^https:\/\//.test(u)) fail(route, `Person sameAs is not https: ${u}`);
+      }
+      if (["Article", "TechArticle"].includes(node["@type"])) {
         for (const k of ["headline", "dateModified", "author", "publisher"])
           if (!node[k]) fail(route, `Article missing ${k}`);
+        if (node.author?.["@id"] !== CREATOR_ID)
+          fail(route, "Article author does not reference the creator @id");
+      }
       if (node["@type"] === "WebApplication")
         for (const k of ["name", "applicationCategory", "offers"])
           if (!node[k]) fail(route, `WebApplication missing ${k}`);
+      if (node["@type"] === "WebApplication")
+        for (const k of ["author", "creator"])
+          if (node[k]?.["@id"] !== CREATOR_ID)
+            fail(route, `WebApplication ${k} does not reference the creator @id`);
     }
   }
+
+  if ((route === "/" || route === "/about") && !hasPerson)
+    fail(route, "missing Person (creator) JSON-LD node");
 
   for (const m of html.matchAll(/<img [^>]*>/g)) {
     if (attr(m[0], "alt") === undefined) fail(route, "<img> without alt");
@@ -130,7 +158,7 @@ for (const l of locs) {
   if (!routes.has(r)) fail(l, "sitemap URL has no page");
 }
 if (
-  !/Sitemap: https:\/\/archboard\.app\/sitemap\.xml/.test(
+  !/Sitemap: https:\/\/archboard\.space\/sitemap\.xml/.test(
     readFileSync(join(OUT, "robots.txt"), "utf8"),
   )
 )

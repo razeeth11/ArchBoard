@@ -1,7 +1,20 @@
-import { SITE } from "./site";
+import { CREATOR, SITE, type Creator } from "./site";
 
 type Json = Record<string, unknown>;
 const abs = (path: string) => `${SITE.url}${path === "/" ? "" : path}`;
+
+export const CREATOR_ID = `${SITE.url}/#creator`;
+const creatorRef = { "@id": CREATOR_ID };
+
+/** The creator as a schema.org Person. Emitted on the homepage and /about; other nodes reference its @id. */
+export const creator = (c: Creator = CREATOR): Json => ({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": CREATOR_ID,
+  name: c.name,
+  url: c.url,
+  sameAs: [...new Set(c.sameAs.filter((u) => u.startsWith("https://")))],
+});
 
 export const breadcrumbs = (trail: { name: string; path: string }[]): Json => ({
   "@context": "https://schema.org",
@@ -14,7 +27,7 @@ export const breadcrumbs = (trail: { name: string; path: string }[]): Json => ({
   })),
 });
 
-export const webApplication = (): Json => ({
+export const webApplication = (c: Creator = CREATOR): Json => ({
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: SITE.name,
@@ -24,6 +37,9 @@ export const webApplication = (): Json => ({
   operatingSystem: "Any",
   browserRequirements: "Requires JavaScript and a modern browser",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  author: creatorRef,
+  creator: creatorRef,
+  codeRepository: c.repoUrl,
 });
 
 export const article = (o: {
@@ -40,7 +56,7 @@ export const article = (o: {
   mainEntityOfPage: abs(o.path),
   dateModified: o.updated,
   datePublished: o.updated,
-  author: { "@type": "Organization", name: SITE.name, url: SITE.url },
+  author: creatorRef,
   publisher: { "@type": "Organization", name: SITE.name, url: SITE.url },
 });
 
