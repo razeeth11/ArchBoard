@@ -33,6 +33,7 @@ import { PresentOverlay } from "@/ui/slides/PresentOverlay";
 import { CommentsPanel, CommentPins } from "@/ui/comments/CommentsPanel";
 import { StylesDialog } from "@/ui/styles/StylesDialog";
 import { CommandPalette } from "@/ui/palette/CommandPalette";
+import { AutoTooltips } from "@/ui/workspace/AutoTooltips";
 import { ToastHost } from "@/ui/workspace/ToastHost";
 import { WorkspacePanel } from "@/ui/workspace/WorkspacePanel";
 
@@ -130,6 +131,7 @@ function Workspace() {
       <ConflictDialog />
       <RecoveryDialog />
       <ToastHost />
+      <AutoTooltips />
     </>
   );
 }

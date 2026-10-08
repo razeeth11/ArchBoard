@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, LayoutGrid, Monitor, Moon, PanelLeft, Sun, Wrench } from "lucide-react";
+import { Download, Home, LayoutGrid, Monitor, Moon, PanelLeft, Sun, Wrench } from "lucide-react";
+import Link from "next/link";
 import { DropdownMenu } from "radix-ui";
 import { getEditorApi } from "@/engine/apiRef";
 import { applyLayout } from "@/layout/apply";
@@ -25,6 +26,15 @@ export function WorkspaceTopRight() {
   return (
     <div className="flex items-center gap-2">
       <SaveStatus />
+      <Link
+        href="/"
+        prefetch={false}
+        aria-label="Home"
+        title="Home"
+        className="border-border bg-surface text-fg flex h-9 w-9 items-center justify-center rounded-lg border"
+      >
+        <Home size={18} aria-hidden />
+      </Link>
       <button
         type="button"
         aria-label={t("toolbar.components")}

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { openEditor } from "./helpers";
 
 const STATIC_PAGES = [
   "/",
@@ -47,4 +48,26 @@ test("self-hosted fonts are requested from our origin, not a CDN", async ({ page
   await page.goto("/app");
   await expect(page.locator(".excalidraw").first()).toBeVisible({ timeout: 15_000 });
   expect(external).toEqual([]);
+});
+
+test("whiteboard has a Home button and every visible button has a tooltip", async ({ page }) => {
+  await openEditor(page);
+  await page.getByRole("button", { name: "Components", exact: true }).click();
+  await page.getByRole("button", { name: "Scenes", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          Array.from(document.querySelectorAll<HTMLElement>("button")).filter(
+            (b) =>
+              !b.hasAttribute("title") &&
+              (b.getAttribute("aria-label") || b.textContent?.trim()) &&
+              b.getClientRects().length > 0,
+          ).length,
+      ),
+    )
+    .toBe(0);
+  await page.getByRole("link", { name: "Home" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
