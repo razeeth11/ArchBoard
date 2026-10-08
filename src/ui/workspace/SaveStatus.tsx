@@ -25,7 +25,7 @@ export function SaveStatus() {
         ) : (
           <Check size={14} aria-hidden />
         )}
-        {label}
+        <span className="sr-only lg:not-sr-only">{label}</span>
       </span>
       {warn && (
         <button
@@ -36,7 +36,7 @@ export function SaveStatus() {
               ? "Browser storage is almost full. Download a backup."
               : "Your browser may clear local data under storage pressure. Download a backup."
           }
-          className="text-fg underline"
+          className="text-fg hidden underline lg:inline"
         >
           Download backup
         </button>

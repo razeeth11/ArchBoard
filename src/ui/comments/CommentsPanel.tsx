@@ -98,7 +98,7 @@ export function CommentsPanel() {
     <aside
       id="comments-panel"
       aria-label="Comments"
-      className="bg-bg text-fg border-border fixed top-16 right-3 bottom-16 z-30 flex w-80 flex-col rounded-xl border p-3 shadow-xl"
+      className="bg-bg text-fg border-border fixed top-16 right-3 bottom-16 z-30 flex w-80 max-w-[92vw] flex-col rounded-xl border p-3 shadow-xl"
     >
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 font-semibold">

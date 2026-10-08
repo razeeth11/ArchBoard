@@ -58,7 +58,10 @@ function DslReference() {
           <article key={ex.id} className="mt-4">
             <h3 className="font-medium">{ex.title}</h3>
             <p className="text-muted text-sm">{ex.description}</p>
-            <pre className="border-border bg-surface mt-2 overflow-x-auto rounded-lg border p-3 text-sm">
+            <pre
+              tabIndex={0}
+              className="border-border bg-surface mt-2 overflow-x-auto rounded-lg border p-3 text-sm"
+            >
               <code>{ex.source}</code>
             </pre>
           </article>

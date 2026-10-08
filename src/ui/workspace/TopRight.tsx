@@ -1,6 +1,16 @@
 "use client";
 
-import { Download, Home, LayoutGrid, Monitor, Moon, PanelLeft, Sun, Wrench } from "lucide-react";
+import {
+  Download,
+  Home,
+  LayoutGrid,
+  Menu,
+  Monitor,
+  Moon,
+  PanelLeft,
+  Sun,
+  Wrench,
+} from "lucide-react";
 import Link from "next/link";
 import { DropdownMenu } from "radix-ui";
 import { getEditorApi } from "@/engine/apiRef";
@@ -23,60 +33,75 @@ export function WorkspaceTopRight() {
   const theme = usePrefs((s) => s.theme);
   const setTheme = usePrefs((s) => s.setTheme);
   const Icon = ICON[theme];
+  const cycleTheme = () => {
+    setTheme(NEXT[theme]);
+    document.documentElement.dataset.theme = resolveTheme(NEXT[theme]);
+  };
   return (
-    <div className="flex items-center gap-2">
+    // On phones this block floats above the bottom bar: Excalidraw's top row is already as wide as the
+    // screen there, so anything added to it would push the toolbar off-screen.
+    <div className="bg-bg/90 pointer-events-auto fixed right-3 bottom-20 z-20 flex items-center gap-1 rounded-xl p-1 shadow-lg sm:static sm:bg-transparent sm:p-0 sm:shadow-none xl:gap-2">
       <SaveStatus />
       <Link
         href="/"
         prefetch={false}
         aria-label="Home"
         title="Home"
-        className="border-border bg-surface text-fg flex h-9 w-9 items-center justify-center rounded-lg border"
+        className="border-border bg-surface text-fg hidden h-9 w-9 items-center justify-center rounded-lg border lg:flex"
       >
         <Home size={18} aria-hidden />
       </Link>
-      <button
-        type="button"
-        aria-label={t("toolbar.components")}
-        aria-expanded={componentsOpen}
-        aria-controls="components-panel"
-        onClick={() => useUi.getState().setComponentsOpen(!componentsOpen)}
-        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
-      >
-        <LayoutGrid size={18} aria-hidden /> {t("toolbar.components")}
-      </button>
-      <ToolsMenu />
-      <button
-        type="button"
-        aria-label={t("toolbar.export")}
-        title="Export (Ctrl/Cmd+Shift+E)"
-        onClick={() => useUi.getState().setExportOpen(true)}
-        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
-      >
-        <Download size={18} aria-hidden /> {t("toolbar.export")}
-      </button>
-      <button
-        type="button"
-        aria-label={`Theme: ${theme}. Switch to ${NEXT[theme]}`}
-        title={`Theme: ${theme}`}
-        onClick={() => {
-          setTheme(NEXT[theme]);
-          document.documentElement.dataset.theme = resolveTheme(NEXT[theme]);
-        }}
-        className="border-border bg-surface text-fg flex h-9 w-9 items-center justify-center rounded-lg border"
-      >
-        <Icon size={18} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label={t("toolbar.scenes")}
-        aria-expanded={open}
-        aria-controls="workspace-panel"
-        onClick={() => setOpen(!open)}
-        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
-      >
-        <PanelLeft size={18} aria-hidden /> {t("toolbar.scenes")}
-      </button>
+      <div className="lg:hidden">
+        <CompactMenu cycleTheme={cycleTheme} themeLabel={theme} />
+      </div>
+      {/* From lg up the buttons sit in the same row; below it they live in the compact menu. */}
+      <div className="hidden items-center gap-1 lg:flex xl:gap-2">
+        <button
+          type="button"
+          aria-label={t("toolbar.components")}
+          aria-expanded={componentsOpen}
+          aria-controls="components-panel"
+          onClick={() => useUi.getState().setComponentsOpen(!componentsOpen)}
+          className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-2 text-sm xl:px-3"
+        >
+          <LayoutGrid size={18} aria-hidden />
+          <span className="hidden xl:inline">{t("toolbar.components")}</span>
+        </button>
+        <ToolsMenu />
+        <button
+          type="button"
+          aria-label={t("toolbar.export")}
+          title="Export (Ctrl/Cmd+Shift+E)"
+          onClick={() => useUi.getState().setExportOpen(true)}
+          className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-2 text-sm xl:px-3"
+        >
+          <Download size={18} aria-hidden />
+          <span className="hidden xl:inline">{t("toolbar.export")}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={`Theme: ${theme}. Switch to ${NEXT[theme]}`}
+          title={`Theme: ${theme}`}
+          onClick={() => {
+            setTheme(NEXT[theme]);
+            document.documentElement.dataset.theme = resolveTheme(NEXT[theme]);
+          }}
+          className="border-border bg-surface text-fg flex h-9 w-9 items-center justify-center rounded-lg border"
+        >
+          <Icon size={18} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label={t("toolbar.scenes")}
+          aria-expanded={open}
+          aria-controls="workspace-panel"
+          onClick={() => setOpen(!open)}
+          className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-2 text-sm xl:px-3"
+        >
+          <PanelLeft size={18} aria-hidden />
+          <span className="hidden xl:inline">{t("toolbar.scenes")}</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -85,76 +110,133 @@ const item =
   "hover:bg-surface flex cursor-pointer items-center justify-between gap-6 rounded px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-surface";
 
 function ToolsMenu() {
-  const ui = useUi.getState;
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         aria-label={t("toolbar.tools")}
-        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-3 text-sm"
+        className="border-border bg-surface text-fg flex h-9 items-center gap-2 rounded-lg border px-2 text-sm xl:px-3"
       >
-        <Wrench size={18} aria-hidden /> {t("toolbar.tools")}
+        <Wrench size={18} aria-hidden />
+        <span className="hidden xl:inline">{t("toolbar.tools")}</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="end"
           className="bg-bg text-fg border-border z-50 min-w-60 rounded-lg border p-1 shadow-xl"
         >
-          <DropdownMenu.Item className={item} onSelect={() => ui().setPaletteOpen(true)}>
-            Command palette <kbd className="text-muted text-xs">Ctrl/⌘ K</kbd>
+          <ToolsItems />
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+/** The shared list of tools, used by the Tools dropdown and the compact menu. */
+function ToolsItems() {
+  const ui = useUi.getState;
+  return (
+    <>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setPaletteOpen(true)}>
+        Command palette <kbd className="text-muted text-xs">Ctrl/⌘ K</kbd>
+      </DropdownMenu.Item>
+      <DropdownMenu.Separator className="bg-border my-1 h-px" />
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("history")}>
+        Version history
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("slides")}>
+        Slides and notes
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => usePresent.getState().start(0)}>
+        Present
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setCommentsOpen(!ui().commentsOpen)}>
+        Comments
+      </DropdownMenu.Item>
+      <DropdownMenu.Separator className="bg-border my-1 h-px" />
+      <DropdownMenu.Sub>
+        <DropdownMenu.SubTrigger className={item}>Auto-layout ›</DropdownMenu.SubTrigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.SubContent className="bg-bg text-fg border-border z-50 min-w-56 rounded-lg border p-1 shadow-xl">
+            {LAYOUTS.map((l) => (
+              <DropdownMenu.Item
+                key={l.kind}
+                className={item}
+                title={l.description}
+                onSelect={() => {
+                  const api = getEditorApi();
+                  if (api) void applyLayout(api, l.kind);
+                }}
+              >
+                {l.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.SubContent>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Sub>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("dsl")}>
+        Diagram from text (DSL)
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("ai")}>
+        Draw with AI (your key)
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("mermaid")}>
+        Mermaid import / export
+      </DropdownMenu.Item>
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("styles")}>
+        Style presets
+      </DropdownMenu.Item>
+      <DropdownMenu.Separator className="bg-border my-1 h-px" />
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("share")}>
+        Share via link
+      </DropdownMenu.Item>
+    </>
+  );
+}
+
+/** Phones and small tablets: one button instead of a row that would not fit next to the toolbar. */
+function CompactMenu({ cycleTheme, themeLabel }: { cycleTheme: () => void; themeLabel: string }) {
+  const ui = useUi.getState;
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        aria-label="Menu"
+        className="border-border bg-surface text-fg flex h-9 w-9 items-center justify-center rounded-lg border"
+      >
+        <Menu size={18} aria-hidden />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          className="bg-bg text-fg border-border z-50 max-h-[80dvh] min-w-56 overflow-y-auto rounded-lg border p-1 shadow-xl"
+        >
+          <DropdownMenu.Item
+            className={item}
+            onSelect={() => ui().setComponentsOpen(!ui().componentsOpen)}
+          >
+            {t("toolbar.components")}
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="bg-border my-1 h-px" />
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("history")}>
-            Version history
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("slides")}>
-            Slides and notes
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className={item} onSelect={() => usePresent.getState().start(0)}>
-            Present
+          <DropdownMenu.Item className={item} onSelect={() => ui().setExportOpen(true)}>
+            {t("toolbar.export")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={item}
-            onSelect={() => ui().setCommentsOpen(!ui().commentsOpen)}
+            onSelect={() =>
+              useWorkspace.getState().setPanelOpen(!useWorkspace.getState().panelOpen)
+            }
           >
-            Comments
+            {t("toolbar.scenes")}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className={item}
+            onSelect={() => void useWorkspace.getState().downloadBackup()}
+          >
+            Download backup
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={item} onSelect={cycleTheme}>
+            Theme: {themeLabel}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="bg-border my-1 h-px" />
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className={item}>Auto-layout ›</DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="bg-bg text-fg border-border z-50 min-w-56 rounded-lg border p-1 shadow-xl">
-                {LAYOUTS.map((l) => (
-                  <DropdownMenu.Item
-                    key={l.kind}
-                    className={item}
-                    title={l.description}
-                    onSelect={() => {
-                      const api = getEditorApi();
-                      if (api) void applyLayout(api, l.kind);
-                    }}
-                  >
-                    {l.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("dsl")}>
-            Diagram from text (DSL)
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("ai")}>
-            Draw with AI (your key)
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("mermaid")}>
-            Mermaid import / export
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("styles")}>
-            Style presets
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="bg-border my-1 h-px" />
-          <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("share")}>
-            Share via link
-          </DropdownMenu.Item>
+          <ToolsItems />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

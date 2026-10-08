@@ -45,8 +45,8 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
     <Page title={`${t.title} diagram template`} wide>
       <Breadcrumbs trail={trail} />
       <p className="text-muted text-lg">{t.summary}</p>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[3fr_2fr]">
-        <div>
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/previews/${t.slug}.svg`}
@@ -65,7 +65,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
             Builds a new scene in your browser. Your existing scenes are not touched.
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold">About this design</h2>
           <p className="mt-2 leading-relaxed">{t.body}</p>
           <h2 className="mt-6 text-xl font-semibold">Diagram as text</h2>
@@ -76,7 +76,10 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
             </Link>
             . Paste it into Tools, Diagram from text to rebuild or change it.
           </p>
-          <pre className="border-border bg-surface mt-2 overflow-x-auto rounded-lg border p-3 text-sm">
+          <pre
+            tabIndex={0}
+            className="border-border bg-surface mt-2 overflow-x-auto rounded-lg border p-3 text-sm"
+          >
             <code>{t.dsl}</code>
           </pre>
         </div>
