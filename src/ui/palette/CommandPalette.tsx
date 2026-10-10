@@ -45,6 +45,12 @@ function useCommands(): Cmd[] {
         run: () => ui().setCommentsOpen(!ui().commentsOpen),
       },
       { id: "dsl", group: "Command", label: "Diagram from text (DSL)", run: dlg("dsl") },
+      {
+        id: "design",
+        group: "Command",
+        label: "Toggle design panel (position and size)",
+        run: () => ui().setDesignOpen(!ui().designOpen),
+      },
       { id: "ai", group: "Command", label: "Draw with AI (your own API key)", run: dlg("ai") },
       { id: "mermaid", group: "Command", label: "Mermaid import / export", run: dlg("mermaid") },
       { id: "share", group: "Command", label: "Share via link", run: dlg("share") },

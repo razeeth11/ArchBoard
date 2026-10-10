@@ -88,3 +88,10 @@ Phase 8 (hardening) specifics:
 - **Scale:** tested with 5,000 (automated) and 20,000 (one-off) plain rectangles. Scenes dominated by images, long text or many smart components were not benchmarked. Phones were not tested.
 - **i18n** is a scaffold: only English strings exist and only the top toolbar and update prompt use the catalogue.
 - **Accessibility:** automated axe checks cover the site pages and key dialogs. There has been no screen-reader walkthrough, and the canvas itself is not accessible beyond what Excalidraw provides.
+
+Editing workflow (labels, tools, home, lists, design panel):
+
+- Label fitting uses an average character width taken from the converter's own measurement; unusual fonts or mixed-width text can wrap one character early or late. Shapes you draw by hand still use Excalidraw's own behaviour (the shape grows taller as you type).
+- The Design panel appears from 1024px wide, edits the selection's bounding box (rotated shapes use their unrotated frame), and does not offer corner radius or per-corner controls. Standalone text is moved, not resized.
+- Lists: bullets, numbers and Enter-continuation work in the text editor. Indentation levels (Tab), nested lists and converting existing text from a menu are not built; Ctrl/Cmd+Shift+8 and 7 are the only toggles.
+- "New editor on every visit" reuses an untouched empty scene; two tabs opened at the same moment may share it. Recent shows the 8 most recently edited scenes.

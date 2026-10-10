@@ -1,5 +1,6 @@
 import type { BinaryFileData } from "@excalidraw/excalidraw/types";
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import { fitBoundText } from "@/library/fitText";
 import { svgToDataURL } from "@/library/svg";
 import type { El } from "./reconcile";
 import { routeArrow } from "./reconcile";
@@ -42,6 +43,7 @@ export async function materialize(gen: Generated, meta: MaterializeMeta): Promis
     gen.parts.map((p) => p.skeleton),
     { regenerateIds: false },
   ) as OrderedExcalidrawElement[];
+  fitBoundText(els);
 
   const known = new Set(gen.parts.map((p) => p.role));
   const idMap = new Map<string, string>();

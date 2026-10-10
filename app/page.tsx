@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/ui/SiteShell";
 import { JsonLd } from "@/ui/JsonLd";
+import { RecentLoader } from "@/ui/home/RecentLoader";
 import { TemplateCard } from "@/ui/TemplateCard";
 import { GUIDES } from "@/content/guides";
 import { TEMPLATES } from "@/content/templates";
@@ -35,6 +36,7 @@ export default function Home() {
             Browse templates
           </Link>
         </div>
+        <RecentLoader />
         <section className="mt-16">
           <h2 className="text-2xl font-semibold">Start from a template</h2>
           <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

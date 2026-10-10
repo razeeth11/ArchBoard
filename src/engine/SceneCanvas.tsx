@@ -25,6 +25,7 @@ import { resolveTheme, usePrefs } from "@/store/prefs";
 import { WorkspaceTopRight } from "@/ui/workspace/TopRight";
 import { sha256Hex } from "@/persistence/blobs";
 import { setEditorApi } from "./apiRef";
+import { getKeepTool, setKeepTool } from "./toolLock";
 import { DRAG_MIME, parsePayload } from "@/library/insert";
 import { importSvgIntoScene, isSvgFile, readSvgFile } from "@/library/svgImport";
 import { insertPayload } from "@/ui/library/ComponentsPanel";
@@ -64,17 +65,13 @@ function toInitialData(a: ActiveScene): ExcalidrawInitialDataState {
     elements: a.page.elements as ExcalidrawInitialDataState["elements"],
     appState: {
       ...(rest as Partial<AppState>),
-      ...(selectedTool
-        ? {
-            activeTool: {
-              type: selectedTool,
-              customType: null,
-              locked: false,
-              lastActiveTool: null,
-              fromSelection: false,
-            },
-          }
-        : {}),
+      activeTool: {
+        type: selectedTool === "hand" ? "hand" : "selection",
+        customType: null,
+        locked: getKeepTool(),
+        lastActiveTool: null,
+        fromSelection: false,
+      },
     } as ExcalidrawInitialDataState["appState"],
     files,
     scrollToContent: st.scrollX === undefined,
@@ -111,6 +108,8 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
       lastThumb: 0,
       selKey: "",
       smartSig: 0,
+      tool: "" as string,
+      locked: getKeepTool(),
       latest: null as null | {
         e: readonly OrderedExcalidrawElement[];
         s: AppState;
@@ -336,6 +335,11 @@ export function SceneCanvas({ active }: { active: ActiveScene }) {
               useSmart.getState().bump();
             }
           }
+          // Clicking the padlock changes `locked` without changing the tool: remember that choice.
+          const at = appState.activeTool;
+          if (at.type === ctl.tool && at.locked !== ctl.locked) setKeepTool(at.locked);
+          ctl.tool = at.type;
+          ctl.locked = at.locked;
           const dots = dotsRef.current;
           if (dots) {
             const size = 24 * appState.zoom.value;

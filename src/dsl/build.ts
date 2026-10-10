@@ -1,5 +1,6 @@
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import type { BuiltFile, StyleCtx } from "@/library/builder";
+import { fitBoundText } from "@/library/fitText";
 import { layoutElements } from "@/layout/elk";
 import type { El } from "@/smart/reconcile";
 import { compileDsl } from "./compile";
@@ -21,6 +22,7 @@ export async function buildDsl(source: string, style?: StyleCtx): Promise<DslBui
   const els = convertToExcalidrawElements(compiled.skeleton, {
     regenerateIds: false,
   }) as OrderedExcalidrawElement[];
+  fitBoundText(els);
   const laid = await layoutElements(els as unknown as El[], program.layout);
   const moved = new Map(laid.elements.map((e) => [e.id, e]));
   const elements = els.map((e) => (moved.get(e.id) ?? e) as unknown as OrderedExcalidrawElement);

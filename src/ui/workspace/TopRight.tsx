@@ -140,6 +140,9 @@ function ToolsItems() {
         Command palette <kbd className="text-muted text-xs">Ctrl/⌘ K</kbd>
       </DropdownMenu.Item>
       <DropdownMenu.Separator className="bg-border my-1 h-px" />
+      <DropdownMenu.Item className={item} onSelect={() => ui().setDesignOpen(!ui().designOpen)}>
+        Design panel
+      </DropdownMenu.Item>
       <DropdownMenu.Item className={item} onSelect={() => ui().setDialog("history")}>
         Version history
       </DropdownMenu.Item>

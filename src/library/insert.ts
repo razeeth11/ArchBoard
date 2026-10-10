@@ -1,6 +1,7 @@
 import type { BinaryFileData, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { BLOCKS, TECH, buildBlock, buildTech } from "./blocks";
+import { fitBoundText } from "./fitText";
 import { Builder, DEFAULT_STYLE, type BuiltItem, type StyleCtx } from "./builder";
 import { fetchOnlineIcon, getOnlineLicense, parseOnlineRef } from "./iconify";
 import { getIcon, parseIconRef } from "./icons";
@@ -142,7 +143,7 @@ export async function insertItem(
   opts: InsertOptions = {},
 ): Promise<string[]> {
   const { convertToExcalidrawElements } = await import("@excalidraw/excalidraw");
-  const els = convertToExcalidrawElements(item.skeleton, { regenerateIds: true });
+  const els = fitBoundText(convertToExcalidrawElements(item.skeleton, { regenerateIds: true }));
   return insertElements(api, els, item.files, item.meta, opts);
 }
 

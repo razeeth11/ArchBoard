@@ -141,17 +141,20 @@ export const useWorkspace = create<WorkspaceState>((set, get) => {
       await get().refresh();
 
       const wanted = new URLSearchParams(window.location.search).get("scene");
-      const last = await repo.getSetting<string | null>(LAST_SCENE_KEY, null);
-      const candidates = [wanted, last, get().scenes[0]?.id].filter((x): x is string => !!x);
-      let target: ActiveScene | null = null;
-      for (const id of candidates) {
-        target = await load(id, 1);
-        if (target || get().corrupt) break;
-      }
+      let target: ActiveScene | null = wanted ? await load(wanted, 1) : null;
       if (!target && !get().corrupt) {
-        const s = await repo.createScene({ title: "Untitled" });
-        await get().refresh();
-        target = await load(s.id, 1);
+        // Opening the editor without a scene (Start drawing, /app) always gives a fresh whiteboard. An
+        // untouched empty one from a moment ago is reused so empty scenes do not pile up. Existing work
+        // is reached from the home page's recent list or the Scenes panel.
+        const newest = get().scenes[0];
+        let reuse: string | null = null;
+        if (newest && newest.title === "Untitled" && newest.pageIds.length === 1) {
+          const first = await repo.loadPage(newest.id).catch(() => null);
+          if (first && first.elements.length === 0) reuse = newest.id;
+        }
+        const id = reuse ?? (await repo.createScene({ title: "Untitled" })).id;
+        if (!reuse) await get().refresh();
+        target = await load(id, 1);
       }
       if (target) {
         set({ active: target });

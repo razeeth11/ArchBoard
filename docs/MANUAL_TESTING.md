@@ -105,3 +105,11 @@ See `docs/KNOWN_GAPS.md` in the repo for the honest list of what is not built ye
 2. **Comments in backups:** add a comment, download a backup from the scenes panel, import it: the copy has the comment pinned.
 3. **Draw with AI (needs your own key):** Tools, Draw with AI, paste an Anthropic key, describe a system: the generated text opens in the DSL editor. Nothing is sent before you press Generate; "Forget key" removes it.
 4. **Presets set new-shape look:** apply Blueprint, then insert a kit or a DSL diagram: it is drawn clean (no sketch roughness). "Reset new-shape look" restores the default.
+
+## 10. Editing workflow
+
+1. Press R, draw two rectangles without touching the toolbar: the rectangle tool stays active. Press V (or click the pointer) to go back. Click the padlock to turn this off; reload and check it is remembered.
+2. Insert a DSL diagram or a smart component with a very long name: labels wrap inside the shapes.
+3. Select a shape: the Design panel (large screens) shows X, Y, W, H, rotation, opacity. Type a width, press Enter; Ctrl+Z undoes it.
+4. Double-click a shape and type `- one`, Enter, `two`, Enter, Enter: a bullet list that ends on the empty item. Try `1. ` for numbers and Ctrl/Cmd+Shift+8 on selected lines.
+5. Home page: the Recent section lists your scenes with thumbnails; click one to resume it; "New whiteboard" or Start drawing opens a new one.

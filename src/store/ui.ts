@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getSetting, setSetting } from "@/persistence/repo";
+import { hydrateKeepTool } from "@/engine/toolLock";
 import { setInsertStyle } from "@/library/builder";
 import type { SvgMode } from "@/library/svgImport";
 
@@ -14,6 +15,9 @@ interface UiState {
   /** Phase 6 dialogs (one at a time). */
   dialog: null | "history" | "slides" | "mermaid" | "dsl" | "share" | "styles" | "ai";
   setDialog: (d: UiState["dialog"]) => void;
+  /** Figma-style numeric panel for the selection (large screens). */
+  designOpen: boolean;
+  setDesignOpen: (v: boolean) => void;
   paletteOpen: boolean;
   setPaletteOpen: (v: boolean) => void;
   commentsOpen: boolean;
@@ -41,6 +45,11 @@ export const useUi = create<UiState>((set) => ({
   },
   dialog: null,
   setDialog: (dialog) => set({ dialog }),
+  designOpen: true,
+  setDesignOpen: (designOpen) => {
+    set({ designOpen });
+    void setSetting("designOpen", designOpen);
+  },
   paletteOpen: false,
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   commentsOpen: false,
@@ -53,14 +62,17 @@ export const useUi = create<UiState>((set) => ({
     void setSetting("svgMode", svgMode);
   },
   hydrate: async () => {
-    const [componentsOpen, iconifyOnline, svgMode, insertStyle] = await Promise.all([
+    await hydrateKeepTool();
+    const [componentsOpen, iconifyOnline, svgMode, insertStyle, designOpen] = await Promise.all([
       getSetting("componentsOpen", false),
       getSetting("iconifyOnline", false),
       getSetting<SvgMode>("svgMode", "image"),
       getSetting<unknown>("insertStyle", null),
+      getSetting("designOpen", true),
     ]);
     if (insertStyle && typeof insertStyle === "object") setInsertStyle(insertStyle as never);
     set({
+      designOpen: designOpen !== false,
       componentsOpen: componentsOpen === true,
       iconifyOnline: iconifyOnline === true,
       svgMode: svgMode === "shapes" ? "shapes" : "image",

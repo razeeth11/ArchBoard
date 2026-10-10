@@ -17,11 +17,13 @@ import { CreateSmartDialog } from "@/ui/smart/CreateSmartDialog";
 import { JsonDefDialog } from "@/ui/smart/JsonDefDialog";
 import { useSmart } from "@/store/smart";
 import { ComponentsPanel } from "@/ui/library/ComponentsPanel";
+import { installTextLists } from "./textList";
 import { registerServiceWorker } from "@/pwa/register";
 import { ShareViewer } from "@/ui/share/ShareViewer";
 import { decodeShare, parseFragment, type SharePayload } from "@/share/link";
 import { payloadToExcalidrawJson } from "@/share/payload";
 import { importExcalidrawFile } from "@/persistence/backup";
+import { DesignPanel } from "@/ui/design/DesignPanel";
 import { PageTabs } from "@/ui/pages/PageTabs";
 import { HistoryDialog } from "@/ui/history/HistoryDialog";
 import { DslDialog } from "@/ui/dsl/DslDialog";
@@ -68,6 +70,7 @@ function Workspace() {
   useEffect(() => {
     registerServiceWorker();
   }, []);
+  useEffect(() => installTextLists(), []);
   useEffect(() => {
     void useUi.getState().hydrate();
     void useSmart.getState().load();
@@ -116,6 +119,7 @@ function Workspace() {
       <CreateSmartDialog />
       <JsonDefDialog />
       <PageTabs />
+      <DesignPanel />
       <HistoryDialog />
       <DslDialog />
       <MermaidDialog />
